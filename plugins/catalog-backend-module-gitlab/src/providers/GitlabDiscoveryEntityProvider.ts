@@ -624,6 +624,14 @@ export class GitlabDiscoveryEntityProvider implements EntityProvider {
       return false;
     }
 
+    // Ignore if in personal namespace
+    if (project?.namespace?.kind === 'user') {
+      this.logger.debug(
+        `Skipping project ${project.path_with_namespace} as it is in a personal namespace.`,
+      );
+      return false;
+    }
+
     if (
       this.config.group &&
       !project.path_with_namespace!.startsWith(`${this.config.group}/`)

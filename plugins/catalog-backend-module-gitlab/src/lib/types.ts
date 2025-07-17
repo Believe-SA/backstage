@@ -32,6 +32,13 @@ export type GitlabProjectForkedFrom = {
   id: number;
 };
 
+export type GitlabNamespaceBasic = {
+  id?: number;
+  name?: string;
+  path?: string;
+  kind?: string;
+};
+
 export type GitLabProject = {
   id: number;
   description?: string;
@@ -43,6 +50,7 @@ export type GitLabProject = {
   web_url: string;
   path_with_namespace?: string;
   forked_from_project?: GitlabProjectForkedFrom;
+  namespace?: GitlabNamespaceBasic;
 };
 
 export type GitLabCommit = {
