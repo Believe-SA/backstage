@@ -139,3 +139,69 @@ export function extractProjectPath(
   // Remove leading slash
   return repo.replace(/^\//, '');
 }
+
+// Converts
+// from: https://gitlab.com/groupA/teams/teamA/subgroupA/repoA/-/blob/branch/filepath
+// to:   https://gitlab.com/api/v4/projects/groupA%2Fteams%2FteamA%2FsubgroupA%2FrepoA/repository/files/filepath/raw?ref=branch
+// Also supports ?ref=<ref> query param for branches with forward slashes
+export function buildProjectUrl(
+  target: string,
+  projectPath: string,
+  config: GitLabIntegrationConfig,
+): URL {
+  try {
+    const url = new URL(target);
+
+    const branchAndFilePath = url.pathname
+      .split('/blob/')
+      .slice(1)
+      .join('/blob/');
+
+    let branch: string;
+    let filePath: string[];
+
+    // Check if ref is provided as a query parameter (useful when branch contains forward slashes)
+    const refParam = url.searchParams.get('ref');
+    if (refParam) {
+      // Use the ref from query parameter
+      branch = decodeURIComponent(refParam);
+      // The file path is everything after the branch name in the pathname
+      const branchSegments = branch.split('/');
+      const allSegments = branchAndFilePath.split('/');
+
+      // Find where the branch name ends and file path begins
+      // The branch segments should match the first segments of allSegments
+      if (
+        branchSegments.length <= allSegments.length &&
+        branchSegments.every(
+          (seg, idx) => seg === decodeURIComponent(allSegments[idx]),
+        )
+      ) {
+        filePath = allSegments.slice(branchSegments.length);
+      } else {
+        // Fallback: if branch doesn't match, use old behavior
+        [branch, ...filePath] = allSegments;
+      }
+    } else {
+      // Default behavior: split on first slash
+      [branch, ...filePath] = branchAndFilePath.split('/');
+    }
+
+    const relativePath = getGitLabIntegrationRelativePath(config);
+
+    url.pathname = [
+      ...(relativePath ? [relativePath] : []),
+      'api/v4/projects',
+      encodeURIComponent(projectPath),
+      'repository/files',
+      encodeURIComponent(decodeURIComponent(filePath.join('/'))),
+      'raw',
+    ].join('/');
+
+    url.search = `?ref=${encodeURIComponent(branch)}`;
+
+    return url;
+  } catch (e) {
+    throw new Error(`Incorrect url: ${target}, ${e}`);
+  }
+}

@@ -94,6 +94,36 @@ describe('gitlab core', () => {
         ).resolves.toBe(fetchUrl);
       });
 
+      it('uses ref query parameter when branch contains forward slashes', async () => {
+        const target =
+          'https://gitlab.com/group/project/-/blob/feat/backstage-ads/backstage-ads-service-push-google-ads%2Fprd%2FChart.yaml?ref=feat%2Fbackstage-ads';
+        const fetchUrl =
+          'https://gitlab.com/api/v4/projects/12345/repository/files/backstage-ads-service-push-google-ads%2Fprd%2FChart.yaml/raw?ref=feat%2Fbackstage-ads';
+        await expect(
+          getGitLabFileFetchUrl(target, configWithNoToken),
+        ).resolves.toBe(fetchUrl);
+      });
+
+      it('uses ref query parameter correctly with URL-encoded file path', async () => {
+        const target =
+          'https://gitlab.com/group/project/-/blob/feat/feature-name/path/to/file.yaml?ref=feat%2Ffeature-name';
+        const fetchUrl =
+          'https://gitlab.com/api/v4/projects/12345/repository/files/path%2Fto%2Ffile.yaml/raw?ref=feat%2Ffeature-name';
+        await expect(
+          getGitLabFileFetchUrl(target, configWithNoToken),
+        ).resolves.toBe(fetchUrl);
+      });
+
+      it('uses ref query parameter when ref is not URL-encoded', async () => {
+        const target =
+          'https://gitlab.com/group/project/-/blob/feat/backstage-ads/file.yaml?ref=feat/backstage-ads';
+        const fetchUrl =
+          'https://gitlab.com/api/v4/projects/12345/repository/files/file.yaml/raw?ref=feat%2Fbackstage-ads';
+        await expect(
+          getGitLabFileFetchUrl(target, configWithNoToken),
+        ).resolves.toBe(fetchUrl);
+      });
+
       describe('when gitlab is self-hosted', () => {
         it('returns projects API URL', async () => {
           const target =
@@ -131,6 +161,16 @@ describe('gitlab core', () => {
               'https://gitlab.mycompany.com/gitlab/group/project/-/blob/branch/folder/file with spaces.yaml';
             const fetchUrl =
               'https://gitlab.mycompany.com/gitlab/api/v4/projects/group%2Fproject/repository/files/folder%2Ffile%20with%20spaces.yaml/raw?ref=branch';
+            await expect(
+              getGitLabFileFetchUrl(target, configSelfHosteWithRelativePath),
+            ).resolves.toBe(fetchUrl);
+          });
+
+          it('uses ref query parameter when branch contains forward slashes', async () => {
+            const target =
+              'https://gitlab.mycompany.com/gitlab/group/project/-/blob/feat/backstage-ads/file.yaml?ref=feat%2Fbackstage-ads';
+            const fetchUrl =
+              'https://gitlab.mycompany.com/gitlab/api/v4/projects/12345/repository/files/file.yaml/raw?ref=feat%2Fbackstage-ads';
             await expect(
               getGitLabFileFetchUrl(target, configSelfHosteWithRelativePath),
             ).resolves.toBe(fetchUrl);
