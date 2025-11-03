@@ -210,6 +210,72 @@ describe('gitlab core', () => {
         ).resolves.toBe(fetchUrl);
       });
     });
+
+    describe('when target is already in API format', () => {
+      it('returns the API URL as-is', async () => {
+        const target =
+          'https://gitlab.com/api/v4/projects/12345/repository/files/folder%2Ffile.yaml/raw?ref=branch';
+        const fetchUrl =
+          'https://gitlab.com/api/v4/projects/12345/repository/files/folder%2Ffile.yaml/raw?ref=branch';
+        await expect(
+          getGitLabFileFetchUrl(target, configWithNoToken),
+        ).resolves.toBe(fetchUrl);
+      });
+
+      it('handles API URL with branch containing forward slashes', async () => {
+        const target =
+          'https://gitlab.com/api/v4/projects/12345/repository/files/file.yaml/raw?ref=feat%2Fbackstage-ads';
+        const fetchUrl =
+          'https://gitlab.com/api/v4/projects/12345/repository/files/file.yaml/raw?ref=feat%2Fbackstage-ads';
+        await expect(
+          getGitLabFileFetchUrl(target, configWithNoToken),
+        ).resolves.toBe(fetchUrl);
+      });
+
+      it('handles API URL with non-encoded ref parameter', async () => {
+        const target =
+          'https://gitlab.com/api/v4/projects/12345/repository/files/file.yaml/raw?ref=feat/backstage-ads';
+        const fetchUrl =
+          'https://gitlab.com/api/v4/projects/12345/repository/files/file.yaml/raw?ref=feat%2Fbackstage-ads';
+        await expect(
+          getGitLabFileFetchUrl(target, configWithNoToken),
+        ).resolves.toBe(fetchUrl);
+      });
+
+      describe('when gitlab is self-hosted', () => {
+        it('returns the API URL as-is', async () => {
+          const target =
+            'https://gitlab.mycompany.com/api/v4/projects/12345/repository/files/folder%2Ffile.yaml/raw?ref=branch';
+          const fetchUrl =
+            'https://gitlab.mycompany.com/api/v4/projects/12345/repository/files/folder%2Ffile.yaml/raw?ref=branch';
+          await expect(
+            getGitLabFileFetchUrl(target, configSelfHostedWithoutRelativePath),
+          ).resolves.toBe(fetchUrl);
+        });
+
+        describe('with a relative path', () => {
+          it('adds relative path if missing in API URL', async () => {
+            const target =
+              'https://gitlab.mycompany.com/api/v4/projects/12345/repository/files/file.yaml/raw?ref=branch';
+            const fetchUrl =
+              'https://gitlab.mycompany.com/gitlab/api/v4/projects/12345/repository/files/file.yaml/raw?ref=branch';
+            await expect(
+              getGitLabFileFetchUrl(target, configSelfHosteWithRelativePath),
+            ).resolves.toBe(fetchUrl);
+          });
+
+          it('preserves relative path if already present in API URL', async () => {
+            const target =
+              'https://gitlab.mycompany.com/gitlab/api/v4/projects/12345/repository/files/file.yaml/raw?ref=branch';
+            const fetchUrl =
+              'https://gitlab.mycompany.com/gitlab/api/v4/projects/12345/repository/files/file.yaml/raw?ref=branch';
+            await expect(
+              getGitLabFileFetchUrl(target, configSelfHosteWithRelativePath),
+            ).resolves.toBe(fetchUrl);
+          });
+        });
+      });
+    });
   });
 
   describe('extractProjectPath', () => {

@@ -20,6 +20,66 @@ import {
 } from './config';
 
 /**
+ * Checks if a URL is already in the GitLab API format for fetching files.
+ *
+ * @param url - The URL to check
+ * @returns true if the URL is already in API format
+ */
+function isGitLabApiUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    return (
+      urlObj.pathname.includes('/api/v4/projects/') &&
+      urlObj.pathname.includes('/repository/files/') &&
+      urlObj.pathname.endsWith('/raw')
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Normalizes a GitLab API URL by ensuring proper formatting.
+ * This handles cases where the URL might need the relative path added.
+ *
+ * @param url - The API URL to normalize
+ * @param config - The relevant provider config
+ * @returns The normalized URL
+ */
+function normalizeGitLabApiUrl(
+  url: string,
+  config: GitLabIntegrationConfig,
+): string {
+  try {
+    const urlObj = new URL(url);
+    const relativePath = getGitLabIntegrationRelativePath(config);
+
+    // If we have a relative path and the URL doesn't include it, add it
+    if (relativePath && !urlObj.pathname.startsWith(relativePath)) {
+      // Ensure pathname starts with / before prepending relativePath
+      const pathname = urlObj.pathname.startsWith('/')
+        ? urlObj.pathname
+        : `/${urlObj.pathname}`;
+      urlObj.pathname = `${relativePath}${pathname}`;
+    }
+
+    // Ensure ref parameter is properly encoded (re-set it to trigger encoding)
+    if (urlObj.searchParams.has('ref')) {
+      const ref = urlObj.searchParams.get('ref');
+      if (ref) {
+        // Remove and re-add to ensure proper encoding
+        urlObj.searchParams.delete('ref');
+        urlObj.searchParams.set('ref', ref);
+      }
+    }
+
+    return urlObj.toString();
+  } catch (e) {
+    throw new Error(`Invalid GitLab API URL: ${url}, ${e}`);
+  }
+}
+
+/**
  * Given a URL pointing to a file on a provider, returns a URL that is suitable
  * for fetching the contents of the data.
  *
@@ -31,6 +91,9 @@ import {
  * -or-
  * from: https://gitlab.com/groupA/teams/teamA/subgroupA/repoA/-/blob/branch/filepath
  * to:   https://gitlab.com/api/v4/projects/groupA%2Fteams%2FteamA%2FsubgroupA%2FrepoA/repository/files/filepath/raw?ref=branch
+ * -or-
+ * Already in API format: https://gitlab.com/api/v4/projects/12345/repository/files/filepath/raw?ref=branch
+ * Returns as-is (with normalization)
  *
  * @param url - A URL pointing to a file
  * @param config - The relevant provider config
@@ -41,9 +104,11 @@ export function getGitLabFileFetchUrl(
   url: string,
   config: GitLabIntegrationConfig,
   _token?: string,
-): Promise<string> {
-  // Use project path directly instead of making an API call to get project ID
-  // Note: _token parameter kept for backward compatibility but not used for path extraction
+): string {
+  // If URL is already in API format, return it directly (with normalization)
+  if (isGitLabApiUrl(url)) {
+    return normalizeGitLabApiUrl(url, config);
+  }
   const projectPath = extractProjectPath(url, config);
   return Promise.resolve(buildProjectUrl(url, projectPath, config).toString());
 }
