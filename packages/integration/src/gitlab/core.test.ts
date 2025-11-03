@@ -22,6 +22,25 @@ import {
 } from './core';
 
 describe('gitlab core', () => {
+  beforeAll(() => worker.listen({ onUnhandledRequest: 'error' }));
+  afterAll(() => worker.close());
+  afterEach(() => worker.resetHandlers());
+
+  beforeEach(() => {
+    worker.use(
+      rest.get('*/api/v4/projects/group%2Fproject', (_, res, ctx) =>
+        res(ctx.status(200), ctx.json({ id: 12345 })),
+      ),
+      rest.get('*/api/v4/projects/group%2Fsubgroup%2Fproject', (_, res, ctx) =>
+        res(ctx.status(200), ctx.json({ id: 12345 })),
+      ),
+      rest.get(
+        '*/api/v4/projects/idp%2Fdeveloper-control-plane%2Fargocd-gcp-values-customer-signing-and-artist-performance',
+        (_, res, ctx) => res(ctx.status(200), ctx.json({ id: 67890 })),
+      ),
+    );
+  });
+
   const configWithNoToken: GitLabIntegrationConfig = {
     host: 'gitlab.com',
     apiBaseUrl: '<ignored>',
@@ -205,6 +224,16 @@ describe('gitlab core', () => {
           'https://gitlab.com/group/project/blob/blob/folder/file.yaml';
         const fetchUrl =
           'https://gitlab.com/api/v4/projects/group%2Fproject/repository/files/folder%2Ffile.yaml/raw?ref=blob';
+        await expect(
+          getGitLabFileFetchUrl(target, configWithNoToken),
+        ).resolves.toBe(fetchUrl);
+      });
+
+      it('uses ref query parameter to properly parse file path when branch matches', async () => {
+        const target =
+          'https://gitlab.com/idp/developer-control-plane/argocd-gcp-values-customer-signing-and-artist-performance/blob/HEAD/account-contract-intranet/prd/Chart.yaml?ref=HEAD';
+        const fetchUrl =
+          'https://gitlab.com/api/v4/projects/67890/repository/files/account-contract-intranet%2Fprd%2FChart.yaml/raw?ref=HEAD';
         await expect(
           getGitLabFileFetchUrl(target, configWithNoToken),
         ).resolves.toBe(fetchUrl);
