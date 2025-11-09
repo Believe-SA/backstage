@@ -138,8 +138,11 @@ export class GitLabDiscoveryProcessor implements CatalogProcessor {
       if (this.skipReposWithoutExactFileMatch) {
         const project_branch = branch === '*' ? project.default_branch : branch;
 
+        // Use path_with_namespace instead of id to align with PR #31392 optimization
+        // and reduce memory overhead from ID lookups
+        const projectIdentifier = project.path_with_namespace ?? project.id;
         const projectHasFile: boolean = await client.hasFile(
-          project.id,
+          projectIdentifier,
           project_branch,
           catalogPath,
         );

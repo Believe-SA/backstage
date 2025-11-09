@@ -302,6 +302,7 @@ const httpProjectFindByIdDynamic = all_projects_response.map(project => {
 
 /**
  * See https://docs.gitlab.com/api/repository_files/#get-file-from-repository
+ * Handles HEAD requests using project IDs (for backward compatibility)
  */
 const httpProjectCatalogDynamic = all_projects_response.flatMap(project => {
   return rest.head(
@@ -319,6 +320,56 @@ const httpProjectCatalogDynamic = all_projects_response.flatMap(project => {
     },
   );
 });
+
+/**
+ * See https://docs.gitlab.com/api/repository_files/#get-file-from-repository
+ * Handles HEAD requests using project paths (path_with_namespace) - used after PR #31392
+ */
+const httpProjectCatalogByPathDynamic = all_projects_response.flatMap(
+  project => {
+    if (!project.path_with_namespace) {
+      return [];
+    }
+    return [
+      // Handler for self-hosted instances
+      rest.head(
+        `${apiBaseUrl}/projects/${encodeURIComponent(
+          project.path_with_namespace,
+        )}/repository/files/catalog-info.yaml`,
+        (req, res, ctx) => {
+          const branch = req.url.searchParams.get('ref');
+          if (
+            branch === project.default_branch ||
+            branch === 'main' ||
+            branch === 'develop' ||
+            branch === 'prd'
+          ) {
+            return res(ctx.status(200));
+          }
+          return res(ctx.status(404, 'Not Found'));
+        },
+      ),
+      // Handler for SaaS instances (gitlab.com)
+      rest.head(
+        `${apiBaseUrlSaas}/projects/${encodeURIComponent(
+          project.path_with_namespace,
+        )}/repository/files/catalog-info.yaml`,
+        (req, res, ctx) => {
+          const branch = req.url.searchParams.get('ref');
+          if (
+            branch === project.default_branch ||
+            branch === 'main' ||
+            branch === 'develop' ||
+            branch === 'prd'
+          ) {
+            return res(ctx.status(200));
+          }
+          return res(ctx.status(404, 'Not Found'));
+        },
+      ),
+    ];
+  },
+);
 
 /**
  * GraphQL endpoint mocks
@@ -767,6 +818,7 @@ export const handlers = [
   ...httpHandlers,
   ...httpProjectFindByIdDynamic,
   ...httpProjectCatalogDynamic,
+  ...httpProjectCatalogByPathDynamic,
   ...httpGroupFindByIdDynamic,
   ...httpGroupFindByNameDynamic,
   ...httpGroupListDescendantProjectsById,

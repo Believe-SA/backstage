@@ -55,6 +55,22 @@ interface UserListOptions extends CommonListOptions {
   exclude_internal?: boolean | undefined;
 }
 
+/**
+ * Consumes a response body to prevent memory leaks from unconsumed streams.
+ * This is critical when throwing errors or retrying without reading the response body.
+ *
+ * @param response - The fetch response whose body should be consumed
+ */
+function consumeResponseBody(response: fetch.Response): void {
+  if (response.body) {
+    try {
+      response.body.resume();
+    } catch (error) {
+      // Ignore errors when consuming the body - we're just trying to prevent leaks
+    }
+  }
+}
+
 export class GitLabClient {
   private readonly config: GitLabIntegrationConfig;
   private readonly integration: GitLabIntegration;
@@ -408,6 +424,9 @@ export class GitLabClient {
     });
 
     if (!response.ok) {
+      // Consume response body before returning to prevent memory leaks
+      // Note: HEAD requests typically have no body, but we consume it anyway for safety
+      consumeResponseBody(response);
       if (response.status >= 500) {
         this.logger.debug(
           `Unexpected response when fetching ${request.toString()}. Expected 200 but got ${
@@ -418,6 +437,8 @@ export class GitLabClient {
       return false;
     }
 
+    // For successful HEAD requests, consume body if present (shouldn't be, but safe)
+    consumeResponseBody(response);
     return true;
   }
 
@@ -455,6 +476,7 @@ export class GitLabClient {
     );
 
     if (!response.ok) {
+      consumeResponseBody(response);
       throw new Error(
         `Unexpected response when fetching ${request.toString()}. Expected 200 but got ${
           response.status
@@ -493,6 +515,7 @@ export class GitLabClient {
     );
 
     if (!response.ok) {
+      consumeResponseBody(response);
       throw new Error(
         `Unexpected response when fetching ${request.toString()}. Expected 200 but got ${
           response.status

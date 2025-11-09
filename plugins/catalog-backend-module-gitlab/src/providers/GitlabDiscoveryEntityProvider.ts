@@ -667,8 +667,11 @@ export class GitlabDiscoveryEntityProvider implements EntityProvider {
       project.default_branch ??
       this.config.fallbackBranch;
 
+    // Use path_with_namespace instead of id to align with PR #31392 optimization
+    // and reduce memory overhead from ID lookups
+    const projectIdentifier = project.path_with_namespace ?? project.id;
     const hasFile = await client.hasFile(
-      project.id,
+      projectIdentifier,
       project_branch,
       this.config.catalogFile,
     );
