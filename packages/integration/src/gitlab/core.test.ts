@@ -238,6 +238,26 @@ describe('gitlab core', () => {
           getGitLabFileFetchUrl(target, configWithNoToken),
         ).resolves.toBe(fetchUrl);
       });
+
+      it('uses ref query parameter to properly parse file path when branch has slashes', async () => {
+        const target =
+          'https://gitlab.com/idp/developer-control-plane/argocd-gcp-values-customer-signing-and-artist-performance/blob/feat/backstage-ads/account-contract-intranet/prd/Chart.yaml?ref=feat%2Fbackstage-ads';
+        const fetchUrl =
+          'https://gitlab.com/api/v4/projects/67890/repository/files/account-contract-intranet%2Fprd%2FChart.yaml/raw?ref=feat%2Fbackstage-ads';
+        await expect(
+          getGitLabFileFetchUrl(target, configWithNoToken),
+        ).resolves.toBe(fetchUrl);
+      });
+
+      it('uses ref query parameter to properly parse file path when branch has slashes and ref is not URL-encoded', async () => {
+        const target =
+          'https://gitlab.com/idp/developer-control-plane/argocd-gcp-values-customer-signing-and-artist-performance/blob/feat/backstage-ads/account-contract-intranet/prd/Chart.yaml?ref=feat/backstage-ads';
+        const fetchUrl =
+          'https://gitlab.com/api/v4/projects/67890/repository/files/account-contract-intranet%2Fprd%2FChart.yaml/raw?ref=feat%2Fbackstage-ads';
+        await expect(
+          getGitLabFileFetchUrl(target, configWithNoToken),
+        ).resolves.toBe(fetchUrl);
+      });
     });
 
     describe('when target is already in API format', () => {
