@@ -15,15 +15,20 @@
  */
 import { paths as cliPaths } from '../../lib/paths';
 import pLimit from 'p-limit';
-import os from 'node:os';
 import { relative as relativePath, resolve as resolvePath } from 'node:path';
 import fs from 'fs-extra';
 import type { KnipConfig } from 'knip';
 import { createBinRunner } from '../util';
+import {
+  getDefaultParallelism,
+  parseParallelismOption,
+  type ParallelismOption,
+} from '@backstage/cli-common';
 
 interface KnipExtractionOptions {
   packageDirs: string[];
   isLocalBuild: boolean;
+  parallelism?: ParallelismOption;
 }
 
 interface KnipConfigOptions {
@@ -167,10 +172,16 @@ async function handlePackage({
 export async function runKnipReports({
   packageDirs,
   isLocalBuild,
+  parallelism,
 }: KnipExtractionOptions) {
   const knipDir = cliPaths.resolveTargetRoot('./node_modules/knip/bin/');
   const knipConfigPath = cliPaths.resolveTargetRoot('./knip.json');
-  const limiter = pLimit(os.cpus().length);
+  const limiter = pLimit(
+    parseParallelismOption(
+      parallelism,
+      getDefaultParallelism({ envVar: 'BACKSTAGE_CLI_BUILD_PARALLEL' }),
+    ),
+  );
 
   await generateKnipConfig({ knipConfigPath });
   try {

@@ -15,7 +15,8 @@
  */
 
 import chalk from 'chalk';
-import { Command, OptionValues } from 'commander';
+import { Command } from 'commander';
+import { ParallelOptionValues } from '@backstage/cli-node';
 import { relative as relativePath } from 'node:path';
 import { buildPackages, getOutputsForRole } from '../../lib/builder';
 import { paths } from '../../../../lib/paths';
@@ -29,7 +30,10 @@ import { buildFrontend } from '../../lib/buildFrontend';
 import { buildBackend } from '../../lib/buildBackend';
 import { createScriptOptionsParser } from '../../../../lib/optionsParser';
 
-export async function command(opts: OptionValues, cmd: Command): Promise<void> {
+export async function command(
+  opts: ParallelOptionValues,
+  cmd: Command,
+): Promise<void> {
   let packages = await PackageGraph.listTargetPackages();
 
   const webpack = process.env.LEGACY_WEBPACK_BUILD
@@ -103,6 +107,7 @@ export async function command(opts: OptionValues, cmd: Command): Promise<void> {
     await runParallelWorkers({
       items: apps,
       parallelismFactor: 1 / 2,
+      parallelismSetting: opts.parallel,
       worker: async pkg => {
         const buildOptions = parseBuildScript(pkg.packageJson.scripts?.build);
         if (!buildOptions) {
@@ -124,6 +129,7 @@ export async function command(opts: OptionValues, cmd: Command): Promise<void> {
     await runParallelWorkers({
       items: backends,
       parallelismFactor: 1 / 2,
+      parallelismSetting: opts.parallel,
       worker: async pkg => {
         const buildOptions = parseBuildScript(pkg.packageJson.scripts?.build);
         if (!buildOptions) {

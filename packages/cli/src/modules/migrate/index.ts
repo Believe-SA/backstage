@@ -16,6 +16,7 @@
 import { createCliPlugin } from '../../wiring/factory';
 import { Command } from 'commander';
 import { lazy } from '../../lib/lazy';
+import { addParallelOption } from '@backstage/cli-node';
 
 export default createCliPlugin({
   pluginId: 'migrate',
@@ -58,8 +59,11 @@ export default createCliPlugin({
             'main',
           )
           .option('--skip-install', 'Skips yarn install step')
-          .option('--skip-migrate', 'Skips migration of any moved packages')
-          .action(lazy(() => import('./commands/versions/bump'), 'default'));
+          .option('--skip-migrate', 'Skips migration of any moved packages');
+        addParallelOption(defaultCommand, {
+          helpLabel: 'worker parallelism for version bump tasks',
+        });
+        defaultCommand.action(lazy(() => import('./commands/versions/bump'), 'default'));
 
         await defaultCommand.parseAsync(args, { from: 'user' });
       },

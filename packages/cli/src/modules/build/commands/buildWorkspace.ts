@@ -16,19 +16,33 @@
 
 import fs from 'fs-extra';
 import { createDistWorkspace } from '../lib/packager';
+import {
+  parseParallelismOption,
+  getDefaultParallelism,
+} from '@backstage/cli-common';
+import { ParallelOptionValues } from '@backstage/cli-node';
 
-type Options = {
-  alwaysPack?: boolean;
-};
-
-export default async (dir: string, packages: string[], options: Options) => {
+export default async (
+  dir: string,
+  packages: string[],
+  options: ParallelOptionValues,
+) => {
   if (!(await fs.pathExists(dir))) {
     throw new Error(`Target workspace directory doesn't exist, '${dir}'`);
   }
 
+  const parallelism = parseParallelismOption(
+    options.parallel,
+    getDefaultParallelism({
+      envVar: 'BACKSTAGE_CLI_BUILD_PARALLEL',
+      clampForCi: true,
+    }),
+  );
+
   await createDistWorkspace(packages, {
     targetDir: dir,
     alwaysPack: options.alwaysPack,
+    parallelism,
     enableFeatureDetection: true,
   });
 };

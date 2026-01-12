@@ -15,14 +15,16 @@
  */
 
 import { spawn } from 'node:child_process';
-import os from 'node:os';
 import pLimit from 'p-limit';
+import { getDefaultParallelism } from '@backstage/cli-common';
 
 // Some commands launch full node processes doing heavy work, which at high
 // concurrency levels risk exhausting system resources. Placing the limiter here
 // at the root level ensures that the concurrency boundary applies globally, not
 // just per-runner.
-const limiter = pLimit(os.cpus().length);
+const limiter = pLimit(
+  getDefaultParallelism({ envVar: 'BACKSTAGE_CLI_BUILD_PARALLEL' }),
+);
 
 export function createBinRunner(cwd: string, path: string) {
   return async (...command: string[]) =>

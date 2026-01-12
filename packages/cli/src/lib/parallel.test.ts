@@ -18,12 +18,35 @@ import os from 'node:os';
 import {
   parseParallelismOption,
   getEnvironmentParallelism,
+  resolveWorkerCount,
   runParallelWorkers,
   runWorkerQueueThreads,
   runWorkerThreads,
 } from './parallel';
 
-const defaultParallelism = Math.ceil(os.cpus().length / 2);
+const originalParallelEnv = process.env.BACKSTAGE_CLI_BUILD_PARALLEL;
+const originalCiEnv = process.env.CI;
+
+const cpuCount = os.availableParallelism();
+const defaultParallelism = Math.max(Math.ceil(cpuCount / 2), 1);
+
+afterAll(() => {
+  if (originalParallelEnv === undefined) {
+    delete process.env.BACKSTAGE_CLI_BUILD_PARALLEL;
+  } else {
+    process.env.BACKSTAGE_CLI_BUILD_PARALLEL = originalParallelEnv;
+  }
+  if (originalCiEnv === undefined) {
+    delete process.env.CI;
+  } else {
+    process.env.CI = originalCiEnv;
+  }
+});
+
+beforeEach(() => {
+  delete process.env.BACKSTAGE_CLI_BUILD_PARALLEL;
+  delete process.env.CI;
+});
 
 describe('parseParallelismOption', () => {
   it('coerces false no parallelism', () => {
@@ -146,6 +169,14 @@ describe('runParallelWorkers', () => {
 
     await work;
     expect(done).toEqual([0, 1, 2, 3, 4]);
+  });
+});
+
+describe('resolveWorkerCount', () => {
+  it('resolves worker count with factor and minimum of 1', () => {
+    expect(resolveWorkerCount(8, 0.5)).toBe(4);
+    expect(resolveWorkerCount(1, 0.5)).toBe(1);
+    expect(resolveWorkerCount(4, 0)).toBe(1);
   });
 });
 

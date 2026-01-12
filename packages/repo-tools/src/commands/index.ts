@@ -17,6 +17,7 @@
 import { assertError } from '@backstage/errors';
 import { Command } from 'commander';
 import { exitWithError } from '../lib/errors';
+import { addParallelOption } from '@backstage/cli-node';
 
 function registerPackageCommand(program: Command) {
   const command = program
@@ -260,13 +261,16 @@ export function registerCommands(program: Command) {
     )
     .action(lazy(() => import('./generate-patch/generate-patch'), 'default'));
 
-  program
+  const knipReportsCommand = program
     .command('knip-reports [paths...]')
     .option('--ci', 'CI run checks that there is no changes on knip reports')
-    .description('Generate a knip report for selected packages')
-    .action(
-      lazy(() => import('./knip-reports/knip-reports'), 'buildKnipReports'),
-    );
+    .description('Generate a knip report for selected packages');
+  addParallelOption(knipReportsCommand, {
+    helpLabel: 'knip parallelism',
+  });
+  knipReportsCommand.action(
+    lazy(() => import('./knip-reports/knip-reports'), 'buildKnipReports'),
+  );
 
   program
     .command('package-docs [paths...]', { hidden: true })

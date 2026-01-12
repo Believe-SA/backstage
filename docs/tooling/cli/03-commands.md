@@ -107,6 +107,9 @@ Build packages in the project, excluding bundled app and backend packages.
 Options:
   --all          Build all packages, including bundled app and backend packages.
   --since <ref>  Only build packages and their dev dependents that changed since the specified ref
+
+Parallelism:
+- `BACKSTAGE_CLI_BUILD_PARALLEL=false|true|<int>` controls worker fan-out for repo/package builds (and also repo/package lint and build-workspace). By default the CLI derives a value from available CPUs; in CI it is clamped to a safe upper bound. Set this explicitly (for example `BACKSTAGE_CLI_BUILD_PARALLEL=2`) to avoid overloading constrained runners.
 ```
 
 ## repo lint
@@ -124,6 +127,7 @@ Options:
   --successCache            Enable success caching, which skips running tests for unchanged packages that were successful in the previous run
   --successCacheDir <path>  Set the success cache location, (default: node_modules/.cache/backstage-cli)
   --fix                     Attempt to automatically fix violations
+  --parallel <value>        Override lint worker parallelism (false|true|<int>)
 ```
 
 ## repo test

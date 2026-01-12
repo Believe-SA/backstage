@@ -18,6 +18,7 @@ import { Command, Option } from 'commander';
 import { createCliPlugin } from '../../wiring/factory';
 import { lazy } from '../../lib/lazy';
 import { configOption } from '../config';
+import { addParallelOption } from '@backstage/cli-node';
 
 export function registerPackageCommands(command: Command) {
   command
@@ -45,8 +46,9 @@ export function registerPackageCommands(command: Command) {
     .option(
       '--module-federation',
       'Build a package as a module federation remote. Applies to frontend plugin packages only.',
-    )
-    .action(lazy(() => import('./commands/package/build'), 'command'));
+    );
+  addParallelOption(command, { helpLabel: 'build parallelism' });
+  command.action(lazy(() => import('./commands/package/build'), 'command'));
 }
 
 export const buildPlugin = createCliPlugin({
@@ -113,8 +115,11 @@ export const buildPlugin = createCliPlugin({
           .option(
             '--minify',
             'Minify the generated code. Does not apply to app package (app is minified by default).',
-          )
-          .action(lazy(() => import('./commands/repo/build'), 'command'));
+          );
+        addParallelOption(defaultCommand, { helpLabel: 'build parallelism' });
+        defaultCommand.action(
+          lazy(() => import('./commands/repo/build'), 'command'),
+        );
         await defaultCommand.parseAsync(args, { from: 'user' });
       },
     });
@@ -216,8 +221,11 @@ export const buildPlugin = createCliPlugin({
           .option(
             '--alwaysPack',
             'Force workspace output to be a result of running `yarn pack` on each package (warning: very slow)',
-          )
-          .action(lazy(() => import('./commands/buildWorkspace'), 'default'));
+          );
+        addParallelOption(defaultCommand, { helpLabel: 'build parallelism' });
+        defaultCommand.action(
+          lazy(() => import('./commands/buildWorkspace'), 'default'),
+        );
         await defaultCommand.parseAsync(args, { from: 'user' });
       },
     });

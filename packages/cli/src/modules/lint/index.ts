@@ -16,6 +16,7 @@
 import { createCliPlugin } from '../../wiring/factory';
 import { Command } from 'commander';
 import { lazy } from '../../lib/lazy';
+import { addParallelOption } from '@backstage/cli-node';
 
 export function registerPackageLintCommand(command: Command) {
   command.arguments('[directories...]');
@@ -33,6 +34,7 @@ export function registerPackageLintCommand(command: Command) {
     '--max-warnings <number>',
     'Fail if more than this number of warnings. -1 allows warnings. (default: -1)',
   );
+  addParallelOption(command, { helpLabel: 'lint worker parallelism' });
   command.description('Lint a package');
   command.action(lazy(() => import('./commands/package/lint'), 'default'));
 }
@@ -85,6 +87,7 @@ export default createCliPlugin({
           '--max-warnings <number>',
           'Fail if more than this number of warnings. -1 allows warnings. (default: -1)',
         );
+        addParallelOption(command, { helpLabel: 'lint worker parallelism' });
         command.description('Lint a repository');
         command.action(lazy(() => import('./commands/repo/lint'), 'command'));
 

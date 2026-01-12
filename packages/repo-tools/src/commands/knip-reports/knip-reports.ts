@@ -20,6 +20,7 @@ import { resolvePackagePaths } from '../../lib/paths';
 
 type Options = {
   ci?: boolean;
+  parallel?: string | number | boolean;
 } & OptionValues;
 
 export const buildKnipReports = async (paths: string[] = [], opts: Options) => {
@@ -51,6 +52,7 @@ export const buildKnipReports = async (paths: string[] = [], opts: Options) => {
       await runKnipReports({
         packageDirs: selectedPackageDirs,
         isLocalBuild: !isCiBuild,
+        parallelism: opts.parallel,
       });
     } catch (e) {
       process.exit(1);

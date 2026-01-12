@@ -33,3 +33,10 @@ export {
   type RunOnOutput,
 } from './run';
 export { ExitCodeError } from './errors';
+export {
+  getDefaultParallelism,
+  parseParallelismOption,
+  applyParallelismFactor,
+  type ParallelismOption,
+} from './parallelism';
+export { addParallelOption } from './parallelOptions';

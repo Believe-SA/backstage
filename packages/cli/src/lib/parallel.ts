@@ -14,45 +14,32 @@
  * limitations under the License.
  */
 
-import os from 'node:os';
 import { ErrorLike } from '@backstage/errors';
 import { Worker } from 'node:worker_threads';
-
-const defaultParallelism = Math.ceil(os.cpus().length / 2);
+import {
+  applyParallelismFactor,
+  getDefaultParallelism as getSharedDefaultParallelism,
+  parseParallelismOption as parseParallelismOptionBase,
+  type ParallelismOption,
+} from '@backstage/cli-common';
 
 const PARALLEL_ENV_VAR = 'BACKSTAGE_CLI_BUILD_PARALLEL';
 
-export type ParallelismOption = boolean | string | number | null | undefined;
-
-export function parseParallelismOption(parallel: ParallelismOption): number {
-  if (parallel === undefined || parallel === null) {
-    return defaultParallelism;
-  } else if (typeof parallel === 'boolean') {
-    return parallel ? defaultParallelism : 1;
-  } else if (typeof parallel === 'number' && Number.isInteger(parallel)) {
-    if (parallel < 1) {
-      return 1;
-    }
-    return parallel;
-  } else if (typeof parallel === 'string') {
-    if (parallel === 'true') {
-      return parseParallelismOption(true);
-    } else if (parallel === 'false') {
-      return parseParallelismOption(false);
-    }
-    const parsed = Number(parallel);
-    if (Number.isInteger(parsed)) {
-      return parseParallelismOption(parsed);
-    }
-  }
-
-  throw Error(
-    `Parallel option value '${parallel}' is not a boolean or integer`,
-  );
+export function parseParallelismOption(
+  parallel: ParallelismOption,
+  defaultParallelism = getSharedDefaultParallelism({
+    envVar: PARALLEL_ENV_VAR,
+    clampForCi: true,
+  }),
+) {
+  return parseParallelismOptionBase(parallel, defaultParallelism);
 }
 
 export function getEnvironmentParallelism() {
-  return parseParallelismOption(process.env[PARALLEL_ENV_VAR]);
+  return getSharedDefaultParallelism({
+    envVar: PARALLEL_ENV_VAR,
+    clampForCi: true,
+  });
 }
 
 type ParallelWorkerOptions<TItem> = {
@@ -68,6 +55,10 @@ type ParallelWorkerOptions<TItem> = {
   worker: (item: TItem) => Promise<void>;
 };
 
+export function resolveWorkerCount(parallelism: number, parallelismFactor = 1) {
+  return applyParallelismFactor(parallelism, parallelismFactor);
+}
+
 export async function runParallelWorkers<TItem>(
   options: ParallelWorkerOptions<TItem>,
 ) {
@@ -81,7 +72,7 @@ export async function runParallelWorkers<TItem>(
     [Symbol.iterator]: () => sharedIterator,
   };
 
-  const workerCount = Math.max(Math.floor(parallelismFactor * parallelism), 1);
+  const workerCount = resolveWorkerCount(parallelism, parallelismFactor);
   return Promise.all(
     Array(workerCount)
       .fill(0)

@@ -22,7 +22,7 @@ import fs from 'fs-extra';
 import chalk from 'chalk';
 import { minimatch } from 'minimatch';
 import semver from 'semver';
-import { OptionValues } from 'commander';
+import { ParallelOptionValues } from '@backstage/cli-node';
 import { isError, NotFoundError } from '@backstage/errors';
 import { resolve as resolvePath } from 'node:path';
 import { paths } from '../../../../lib/paths';
@@ -67,7 +67,7 @@ function extendsDefaultPattern(pattern: string): boolean {
   return minimatch('@backstage/', pattern.slice(0, -1));
 }
 
-export default async (opts: OptionValues) => {
+export default async (opts: ParallelOptionValues) => {
   const lockfilePath = paths.resolveTargetRoot('yarn.lock');
   const lockfile = await Lockfile.load(lockfilePath);
   const hasYarnPlugin = await getHasYarnPlugin();
@@ -147,6 +147,7 @@ export default async (opts: OptionValues) => {
 
   await runParallelWorkers({
     parallelismFactor: 4,
+    parallelismSetting: opts.parallel,
     items: dependencyMap.entries(),
     async worker([name, pkgs]) {
       let target: string;
@@ -184,6 +185,7 @@ export default async (opts: OptionValues) => {
     const breakingUpdates = new Map<string, { from: string; to: string }>();
     await runParallelWorkers({
       parallelismFactor: 4,
+      parallelismSetting: opts.parallel,
       items: versionBumps.entries(),
       async worker([name, deps]) {
         const pkgPath = resolvePath(deps[0].location, 'package.json');

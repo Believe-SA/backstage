@@ -16,7 +16,8 @@
 
 import chalk from 'chalk';
 import fs from 'fs-extra';
-import { Command, OptionValues } from 'commander';
+import { Command } from 'commander';
+import { ParallelOptionValues } from '@backstage/cli-node';
 import { createHash } from 'node:crypto';
 import { relative as relativePath } from 'node:path';
 import {
@@ -25,7 +26,11 @@ import {
   Lockfile,
 } from '@backstage/cli-node';
 import { paths } from '../../../../lib/paths';
-import { runWorkerQueueThreads } from '../../../../lib/parallel';
+import {
+  parseParallelismOption,
+  getEnvironmentParallelism,
+  runWorkerQueueThreads,
+} from '../../../../lib/parallel';
 import { createScriptOptionsParser } from '../../../../lib/optionsParser';
 import { SuccessCache } from '../../../../lib/cache/SuccessCache';
 
@@ -37,7 +42,10 @@ function depCount(pkg: BackstagePackageJson) {
   return deps + devDeps;
 }
 
-export async function command(opts: OptionValues, cmd: Command): Promise<void> {
+export async function command(
+  opts: ParallelOptionValues,
+  cmd: Command,
+): Promise<void> {
   let packages = await PackageGraph.listTargetPackages();
 
   const cache = new SuccessCache('lint', opts.successCacheDir);
@@ -105,6 +113,11 @@ export async function command(opts: OptionValues, cmd: Command): Promise<void> {
     }),
   );
 
+  const resolvedParallelism = parseParallelismOption(
+    opts.parallel,
+    getEnvironmentParallelism(),
+  );
+
   const resultsList = await runWorkerQueueThreads({
     items: items.filter(item => item.lintOptions), // Filter out packages without lint script
     workerData: {
@@ -115,6 +128,7 @@ export async function command(opts: OptionValues, cmd: Command): Promise<void> {
       successCache: cacheContext?.entries,
       rootDir: paths.targetRoot,
     },
+    threadCount: Math.min(resolvedParallelism, items.length),
     workerFactory: async ({
       fix,
       format,

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import os from 'node:os';
 import crypto from 'node:crypto';
 import yargs from 'yargs';
 // 'jest-cli' is included with jest and should be kept in sync with the installed jest version
@@ -24,8 +23,12 @@ import { relative as relativePath } from 'node:path';
 import { Command, OptionValues } from 'commander';
 import { Lockfile, PackageGraph } from '@backstage/cli-node';
 import { paths } from '../../../../lib/paths';
-import { runCheck, runOutput } from '@backstage/cli-common';
-import { isChildPath } from '@backstage/cli-common';
+import {
+  getDefaultParallelism,
+  isChildPath,
+  runCheck,
+  runOutput,
+} from '@backstage/cli-common';
 import { SuccessCache } from '../../../../lib/cache/SuccessCache';
 
 type JestProject = {
@@ -234,8 +237,12 @@ export async function command(opts: OptionValues, cmd: Command): Promise<void> {
   // Depending on the mode tests are run with the default count is either cpus-1, or cpus/2.
   // This means that if we've got at 4 or more cores we'll always get at least 2 workers, but
   // otherwise we need to set the worker count explicitly unless already done.
+  const defaultParallelism = getDefaultParallelism({
+    envVar: 'BACKSTAGE_CLI_BUILD_PARALLEL',
+    clampForCi: true,
+  });
   if (
-    os.cpus().length <= 3 &&
+    defaultParallelism <= 2 &&
     !hasFlags('-i', '--runInBand', '-w', '--maxWorkers')
   ) {
     args.push('--maxWorkers=2');

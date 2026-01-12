@@ -227,6 +227,7 @@ export async function createDistWorkspace(
     if (customBuild.length > 0) {
       await runParallelWorkers({
         items: customBuild,
+        parallelismSetting: options.parallelism,
         worker: async ({ name, dir, args }) => {
           await run(['yarn', 'run', 'build', ...(args || [])], {
             cwd: dir,
@@ -370,6 +371,7 @@ async function moveToDistWorkspace(
   // Repacking in parallel is much faster and safe for all packages outside of the Backstage repo
   await runParallelWorkers({
     items: safePackages.map((target, index) => ({ target, index })),
+    parallelismSetting: options.parallelism,
     worker: async ({ target, index }) => {
       await pack(target, `temp-package-${index}.tgz`);
     },
