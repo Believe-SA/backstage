@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { forwardRef } from 'react';
+import { Children, forwardRef, isValidElement } from 'react';
 import {
   OverlayArrow,
   Tooltip as AriaTooltip,
   TooltipTrigger as AriaTooltipTrigger,
+  Focusable,
   TooltipTriggerComponentProps,
 } from 'react-aria-components';
 import clsx from 'clsx';
@@ -29,9 +30,21 @@ import styles from './Tooltip.module.css';
 
 /** @public */
 export const TooltipTrigger = (props: TooltipTriggerComponentProps) => {
-  const { delay = 600 } = props;
+  const { delay = 600, children, ...restProps } = props;
+  const tooltipChildren = Children.toArray(children) as React.ReactElement[];
+  const tooltip = tooltipChildren.find(
+    child => isValidElement(child) && child.type === Tooltip,
+  );
+  const restChildren = tooltipChildren.filter(child => child !== tooltip);
 
-  return <AriaTooltipTrigger delay={delay} {...props} />;
+  return (
+    <AriaTooltipTrigger delay={delay} {...restProps}>
+      {restChildren.map((child, index) => (
+        <Focusable key={index}>{child}</Focusable>
+      ))}
+      {tooltip}
+    </AriaTooltipTrigger>
+  );
 };
 
 /** @public */
