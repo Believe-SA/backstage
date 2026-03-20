@@ -98,7 +98,7 @@ describe('gitlab core', () => {
         const target =
           'https://gitlab.com/group/project/-/blob/feat/backstage-ads/backstage-ads-service-push-google-ads%2Fprd%2FChart.yaml?ref=feat%2Fbackstage-ads';
         const fetchUrl =
-          'https://gitlab.com/api/v4/projects/12345/repository/files/backstage-ads-service-push-google-ads%2Fprd%2FChart.yaml/raw?ref=feat%2Fbackstage-ads';
+          'https://gitlab.com/api/v4/projects/group%2Fproject/repository/files/backstage-ads-service-push-google-ads%2Fprd%2FChart.yaml/raw?ref=feat%2Fbackstage-ads';
         await expect(
           getGitLabFileFetchUrl(target, configWithNoToken),
         ).resolves.toBe(fetchUrl);
@@ -108,7 +108,7 @@ describe('gitlab core', () => {
         const target =
           'https://gitlab.com/group/project/-/blob/feat/feature-name/path/to/file.yaml?ref=feat%2Ffeature-name';
         const fetchUrl =
-          'https://gitlab.com/api/v4/projects/12345/repository/files/path%2Fto%2Ffile.yaml/raw?ref=feat%2Ffeature-name';
+          'https://gitlab.com/api/v4/projects/group%2Fproject/repository/files/path%2Fto%2Ffile.yaml/raw?ref=feat%2Ffeature-name';
         await expect(
           getGitLabFileFetchUrl(target, configWithNoToken),
         ).resolves.toBe(fetchUrl);
@@ -118,7 +118,7 @@ describe('gitlab core', () => {
         const target =
           'https://gitlab.com/group/project/-/blob/feat/backstage-ads/file.yaml?ref=feat/backstage-ads';
         const fetchUrl =
-          'https://gitlab.com/api/v4/projects/12345/repository/files/file.yaml/raw?ref=feat%2Fbackstage-ads';
+          'https://gitlab.com/api/v4/projects/group%2Fproject/repository/files/file.yaml/raw?ref=feat%2Fbackstage-ads';
         await expect(
           getGitLabFileFetchUrl(target, configWithNoToken),
         ).resolves.toBe(fetchUrl);
@@ -170,7 +170,7 @@ describe('gitlab core', () => {
             const target =
               'https://gitlab.mycompany.com/gitlab/group/project/-/blob/feat/backstage-ads/file.yaml?ref=feat%2Fbackstage-ads';
             const fetchUrl =
-              'https://gitlab.mycompany.com/gitlab/api/v4/projects/12345/repository/files/file.yaml/raw?ref=feat%2Fbackstage-ads';
+              'https://gitlab.mycompany.com/gitlab/api/v4/projects/group%2Fproject/repository/files/file.yaml/raw?ref=feat%2Fbackstage-ads';
             await expect(
               getGitLabFileFetchUrl(target, configSelfHosteWithRelativePath),
             ).resolves.toBe(fetchUrl);
@@ -214,7 +214,7 @@ describe('gitlab core', () => {
         const target =
           'https://gitlab.com/idp/developer-control-plane/argocd-gcp-values-customer-signing-and-artist-performance/blob/HEAD/account-contract-intranet/prd/Chart.yaml?ref=HEAD';
         const fetchUrl =
-          'https://gitlab.com/api/v4/projects/67890/repository/files/account-contract-intranet%2Fprd%2FChart.yaml/raw?ref=HEAD';
+          'https://gitlab.com/api/v4/projects/idp%2Fdeveloper-control-plane%2Fargocd-gcp-values-customer-signing-and-artist-performance/repository/files/account-contract-intranet%2Fprd%2FChart.yaml/raw?ref=HEAD';
         await expect(
           getGitLabFileFetchUrl(target, configWithNoToken),
         ).resolves.toBe(fetchUrl);
@@ -224,7 +224,7 @@ describe('gitlab core', () => {
         const target =
           'https://gitlab.com/idp/developer-control-plane/argocd-gcp-values-customer-signing-and-artist-performance/blob/feat/backstage-ads/account-contract-intranet/prd/Chart.yaml?ref=feat%2Fbackstage-ads';
         const fetchUrl =
-          'https://gitlab.com/api/v4/projects/67890/repository/files/account-contract-intranet%2Fprd%2FChart.yaml/raw?ref=feat%2Fbackstage-ads';
+          'https://gitlab.com/api/v4/projects/idp%2Fdeveloper-control-plane%2Fargocd-gcp-values-customer-signing-and-artist-performance/repository/files/account-contract-intranet%2Fprd%2FChart.yaml/raw?ref=feat%2Fbackstage-ads';
         await expect(
           getGitLabFileFetchUrl(target, configWithNoToken),
         ).resolves.toBe(fetchUrl);
@@ -234,7 +234,7 @@ describe('gitlab core', () => {
         const target =
           'https://gitlab.com/idp/developer-control-plane/argocd-gcp-values-customer-signing-and-artist-performance/blob/feat/backstage-ads/account-contract-intranet/prd/Chart.yaml?ref=feat/backstage-ads';
         const fetchUrl =
-          'https://gitlab.com/api/v4/projects/67890/repository/files/account-contract-intranet%2Fprd%2FChart.yaml/raw?ref=feat%2Fbackstage-ads';
+          'https://gitlab.com/api/v4/projects/idp%2Fdeveloper-control-plane%2Fargocd-gcp-values-customer-signing-and-artist-performance/repository/files/account-contract-intranet%2Fprd%2FChart.yaml/raw?ref=feat%2Fbackstage-ads';
         await expect(
           getGitLabFileFetchUrl(target, configWithNoToken),
         ).resolves.toBe(fetchUrl);
