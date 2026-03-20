@@ -22,25 +22,6 @@ import {
 } from './core';
 
 describe('gitlab core', () => {
-  beforeAll(() => worker.listen({ onUnhandledRequest: 'error' }));
-  afterAll(() => worker.close());
-  afterEach(() => worker.resetHandlers());
-
-  beforeEach(() => {
-    worker.use(
-      rest.get('*/api/v4/projects/group%2Fproject', (_, res, ctx) =>
-        res(ctx.status(200), ctx.json({ id: 12345 })),
-      ),
-      rest.get('*/api/v4/projects/group%2Fsubgroup%2Fproject', (_, res, ctx) =>
-        res(ctx.status(200), ctx.json({ id: 12345 })),
-      ),
-      rest.get(
-        '*/api/v4/projects/idp%2Fdeveloper-control-plane%2Fargocd-gcp-values-customer-signing-and-artist-performance',
-        (_, res, ctx) => res(ctx.status(200), ctx.json({ id: 67890 })),
-      ),
-    );
-  });
-
   const configWithNoToken: GitLabIntegrationConfig = {
     host: 'gitlab.com',
     apiBaseUrl: '<ignored>',

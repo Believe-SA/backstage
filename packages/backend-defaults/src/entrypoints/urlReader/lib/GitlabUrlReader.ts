@@ -42,22 +42,6 @@ import { ReadUrlResponseFactory } from './ReadUrlResponseFactory';
 import { ReaderFactory, ReadTreeResponseFactory } from './types';
 
 /**
- * Consumes a response body to prevent memory leaks from unconsumed streams.
- * This is critical when throwing errors without reading the response body.
- *
- * @param response - The fetch response whose body should be consumed
- */
-function consumeResponseBody(response: Response): void {
-  if (response.body) {
-    try {
-      response.body.resume();
-    } catch (error) {
-      // Ignore errors when consuming the body - we're just trying to prevent leaks
-    }
-  }
-}
-
-/**
  * Implements a {@link @backstage/backend-plugin-api#UrlReaderService} for files on GitLab.
  *
  * @public
@@ -122,15 +106,12 @@ export class GitlabUrlReader implements UrlReaderService {
     }
 
     if (response.status === 304) {
-      consumeResponseBody(response);
       throw new NotModifiedError();
     }
 
     if (response.ok) {
       return ReadUrlResponseFactory.fromResponse(response);
     }
-
-    consumeResponseBody(response);
 
     const message = `${url} could not be read as ${builtUrl}, ${response.status} ${response.statusText}`;
     if (response.status === 404) {
@@ -173,7 +154,6 @@ export class GitlabUrlReader implements UrlReaderService {
       getGitLabRequestOptions(this.integration.config, token),
     );
     if (!projectGitlabResponse.ok) {
-      consumeResponseBody(projectGitlabResponse);
       const msg = `Failed to read tree from ${url}, ${projectGitlabResponse.status} ${projectGitlabResponse.statusText}`;
       if (projectGitlabResponse.status === 404) {
         throw new NotFoundError(msg);
@@ -210,7 +190,6 @@ export class GitlabUrlReader implements UrlReaderService {
       },
     );
     if (!commitsGitlabResponse.ok) {
-      consumeResponseBody(commitsGitlabResponse);
       const message = `Failed to read tree (branch) from ${url}, ${commitsGitlabResponse.status} ${commitsGitlabResponse.statusText}`;
       if (commitsGitlabResponse.status === 404) {
         throw new NotFoundError(message);
@@ -245,7 +224,6 @@ export class GitlabUrlReader implements UrlReaderService {
       ...(signal && { signal: signal as any }),
     });
     if (!archiveGitLabResponse.ok) {
-      consumeResponseBody(archiveGitLabResponse);
       const message = `Failed to read tree (archive) from ${url}, ${archiveGitLabResponse.status} ${archiveGitLabResponse.statusText}`;
       if (archiveGitLabResponse.status === 404) {
         throw new NotFoundError(message);

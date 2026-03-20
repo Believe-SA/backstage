@@ -116,38 +116,6 @@ describe('GitLabClient', () => {
       expect(nextPage).toBeNull();
     });
 
-    it('should consume response body on error to prevent memory leaks', async () => {
-      const mockBody = {
-        resume: jest.fn(),
-      };
-      const mockResponse = {
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
-        body: mockBody,
-        headers: new Map(),
-      };
-
-      const client = new GitLabClient({
-        config: readGitLabIntegrationConfig(
-          new ConfigReader(mock.config_self_managed),
-        ),
-        logger: mockServices.logger.mock(),
-      });
-
-      // Mock the fetchWithRetry to return our mock response
-      jest
-        .spyOn(client as any, 'fetchWithRetry')
-        .mockResolvedValue(mockResponse);
-
-      await expect(
-        client.pagedRequest('/projects', { page: 1 }),
-      ).rejects.toThrow();
-
-      // Verify response body was consumed
-      expect(mockBody.resume).toHaveBeenCalled();
-    });
-
     it('should throw if response is not okay', async () => {
       const client = new GitLabClient({
         integration: new GitLabIntegration(
@@ -752,28 +720,6 @@ describe('hasFile', () => {
   it('should not find catalog file', async () => {
     const hasFile = await client.hasFile(1, 'unknown', 'catalog-info.yaml');
     expect(hasFile).toBe(false);
-  });
-
-  it('should consume response body on error to prevent memory leaks', async () => {
-    const responseBody = { Readable: require('stream').Readable };
-    const mockBody = {
-      resume: jest.fn(),
-    };
-    const mockResponse = {
-      ok: false,
-      status: 404,
-      statusText: 'Not Found',
-      body: mockBody,
-      headers: new Map(),
-    };
-
-    // Mock fetchWithRetry to return our mock response
-    jest.spyOn(client as any, 'fetchWithRetry').mockResolvedValue(mockResponse);
-
-    await client.hasFile(1, 'main', 'catalog-info.yaml');
-
-    // Verify response body was consumed
-    expect(mockBody.resume).toHaveBeenCalled();
   });
 });
 
