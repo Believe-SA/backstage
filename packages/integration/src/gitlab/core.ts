@@ -104,10 +104,10 @@ export function getGitLabFileFetchUrl(
   url: string,
   config: GitLabIntegrationConfig,
   _token?: string,
-): string {
+): Promise<string> {
   // If URL is already in API format, return it directly (with normalization)
   if (isGitLabApiUrl(url)) {
-    return normalizeGitLabApiUrl(url, config);
+    return Promise.resolve(normalizeGitLabApiUrl(url, config));
   }
   const projectPath = extractProjectPath(url, config);
   return Promise.resolve(buildProjectUrl(url, projectPath, config).toString());
@@ -135,74 +135,6 @@ export function getGitLabRequestOptions(
   }
 
   return { headers };
-}
-
-// Converts
-// from: https://gitlab.com/groupA/teams/teamA/subgroupA/repoA/-/blob/branch/filepath
-// to:   https://gitlab.com/api/v4/projects/groupA%2Fteams%2FteamA%2FsubgroupA%2FrepoA/repository/files/filepath/raw?ref=branch
-export function buildProjectUrl(
-  target: string,
-  projectPathOrID: string | Number,
-  config: GitLabIntegrationConfig,
-): URL {
-  try {
-    const url = new URL(target);
-
-    const branchAndFilePath = url.pathname
-      .split('/blob/')
-      .slice(1)
-      .join('/blob/');
-    const [branch, ...filePath] = branchAndFilePath.split('/');
-    const relativePath = getGitLabIntegrationRelativePath(config);
-
-    const projectIdentifier = encodeURIComponent(String(projectPathOrID));
-
-    url.pathname = [
-      ...(relativePath ? [relativePath] : []),
-      'api/v4/projects',
-      projectIdentifier,
-      'repository/files',
-      encodeURIComponent(decodeURIComponent(filePath.join('/'))),
-      'raw',
-    ].join('/');
-
-    url.search = `?ref=${branch}`;
-
-    return url;
-  } catch (e) {
-    throw new Error(`Incorrect url: ${target}, ${e}`);
-  }
-}
-
-/**
- * Extracts the project path from a GitLab URL
- * from: https://gitlab.com/groupA/teams/teamA/subgroupA/repoA/-/blob/branch/filepath
- * to:   groupA/teams/teamA/subgroupA/repoA
- */
-export function extractProjectPath(
-  target: string,
-  config: GitLabIntegrationConfig,
-): string {
-  const url = new URL(target);
-
-  if (!url.pathname.includes('/blob/')) {
-    throw new Error(
-      `Failed extracting project path from ${url.pathname}. Url path must include /blob/.`,
-    );
-  }
-
-  let repo = url.pathname.split('/-/blob/')[0].split('/blob/')[0];
-
-  // Get gitlab relative path
-  const relativePath = getGitLabIntegrationRelativePath(config);
-
-  // Check relative path exist and replace it if it's the case.
-  if (relativePath) {
-    repo = repo.replace(relativePath, '');
-  }
-
-  // Remove leading slash
-  return repo.replace(/^\//, '');
 }
 
 // Converts
@@ -269,4 +201,35 @@ export function buildProjectUrl(
   } catch (e) {
     throw new Error(`Incorrect url: ${target}, ${e}`);
   }
+}
+
+/**
+ * Extracts the project path from a GitLab URL
+ * from: https://gitlab.com/groupA/teams/teamA/subgroupA/repoA/-/blob/branch/filepath
+ * to:   groupA/teams/teamA/subgroupA/repoA
+ */
+export function extractProjectPath(
+  target: string,
+  config: GitLabIntegrationConfig,
+): string {
+  const url = new URL(target);
+
+  if (!url.pathname.includes('/blob/')) {
+    throw new Error(
+      `Failed extracting project path from ${url.pathname}. Url path must include /blob/.`,
+    );
+  }
+
+  let repo = url.pathname.split('/-/blob/')[0].split('/blob/')[0];
+
+  // Get gitlab relative path
+  const relativePath = getGitLabIntegrationRelativePath(config);
+
+  // Check relative path exist and replace it if it's the case.
+  if (relativePath) {
+    repo = repo.replace(relativePath, '');
+  }
+
+  // Remove leading slash
+  return repo.replace(/^\//, '');
 }
