@@ -48,7 +48,7 @@
     "@backstage/errors": "workspace:^",
     "@backstage/integration": "workspace:^",
     "@backstage/plugin-scaffolder-node": "workspace:^",
-    "@google-cloud/storage": "^7.0.0",
+    "@google-cloud/storage": "^8.0.1",
     "raw-body": "^2.4.1"
   },
   "devDependencies": {

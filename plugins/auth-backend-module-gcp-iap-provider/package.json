@@ -42,7 +42,7 @@
     "@backstage/errors": "workspace:^",
     "@backstage/plugin-auth-node": "workspace:^",
     "@backstage/types": "workspace:^",
-    "google-auth-library": "^9.0.0",
+    "google-auth-library": "^11.0.2",
     "zod": "^3.25.76 || ^4.0.0"
   },
   "devDependencies": {

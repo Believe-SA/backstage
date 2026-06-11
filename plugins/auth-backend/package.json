@@ -51,7 +51,7 @@
     "@backstage/plugin-auth-node": "workspace:^",
     "@backstage/plugin-catalog-node": "workspace:^",
     "@backstage/types": "workspace:^",
-    "@google-cloud/firestore": "^7.0.0",
+    "@google-cloud/firestore": "^9.0.1",
     "connect-session-knex": "^4.0.0",
     "cookie-parser": "^1.4.5",
     "express": "^4.22.0",
