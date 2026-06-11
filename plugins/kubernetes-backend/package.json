@@ -57,7 +57,7 @@
     "@backstage/plugin-kubernetes-node": "workspace:^",
     "@backstage/plugin-permission-common": "workspace:^",
     "@backstage/types": "workspace:^",
-    "@google-cloud/container": "^5.0.0",
+    "@google-cloud/container": "^7.3.0",
     "@jest-mock/express": "^2.0.1",
     "@kubernetes/client-node": "1.4.0",
     "@smithy/signature-v4": "^4.1.0",
