@@ -120,6 +120,17 @@ NOTE: Render functions are no longer supported in this approach.
 */
 
 /**
+ * Styled Backstage Page that fills available vertical space
+ */
+const StyledPage = styled(Page)({
+  height: 'inherit',
+  overflowY: 'visible',
+  '--techdocs-sidebar-width': '16rem',
+  '--techdocs-content-max-width': '100%',
+  '--techdocs-sidebar-top': '0px',
+});
+
+/**
  * Props for {@link TechDocsReaderLayout}
  * @public
  */
@@ -141,11 +152,11 @@ export type TechDocsReaderLayoutProps = {
 export const TechDocsReaderLayout = (props: TechDocsReaderLayoutProps) => {
   const { withSearch, withHeader = true } = props;
   return (
-    <Page themeId="documentation">
+    <StyledPage themeId="documentation" className="techdocs-reader-page">
       {withHeader && <TechDocsReaderPageHeader />}
       <TechDocsReaderPageSubheader />
       <TechDocsReaderPageContent withSearch={withSearch} />
-    </Page>
+    </StyledPage>
   );
 };
 
@@ -157,14 +168,6 @@ export type TechDocsReaderPageProps = {
   children?: TechDocsReaderPageRenderFunction | ReactNode;
   overrideThemeOptions?: Partial<ThemeOptions>;
 };
-
-/**
- * Styled Backstage Page that fills available vertical space
- */
-const StyledPage = styled(Page)({
-  height: 'inherit',
-  overflowY: 'visible',
-});
 
 /**
  * An addon-aware implementation of the TechDocsReaderPage.

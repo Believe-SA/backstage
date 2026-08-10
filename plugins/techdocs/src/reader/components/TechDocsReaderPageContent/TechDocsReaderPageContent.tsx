@@ -31,9 +31,11 @@ import { useTechDocsReaderContentData } from '../../../hooks/useTechDocsReaderCo
 const useStyles = makeStyles({
   search: {
     width: '100%',
+    maxWidth: 'var(--techdocs-content-max-width, 100%)',
+    margin: '0 auto',
+    // Match main column: full width minus two sidebars when the reader is wide.
     '@media (min-width: 76.1875em)': {
-      width: 'calc(100% - 34.4rem)',
-      margin: '0 auto',
+      width: 'calc(100% - (2 * var(--techdocs-sidebar-width, 16rem)))',
     },
     '@media print': {
       display: 'none',
