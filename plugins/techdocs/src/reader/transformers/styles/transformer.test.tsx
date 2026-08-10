@@ -71,6 +71,59 @@ describe('Transformers > Styles', () => {
     expect(stray).toEqual([]);
   });
 
+  it('should declare soft TechDocs layout custom properties on :host', () => {
+    const { result } = renderHook(() => useStylesTransformer());
+    const dom = document.createElement('html');
+    dom.innerHTML = '<head></head>';
+    result.current(dom);
+    const css = dom.querySelector('head > style')!.textContent!;
+
+    expect(css).toContain('--techdocs-sidebar-width: 16rem');
+    expect(css).toContain('--techdocs-sidebar-top: 0px');
+    expect(css).toContain('--techdocs-content-max-width: 100%');
+  });
+
+  it('should key narrow sidebar/drawer layout off viewport media, matching MkDocs Material', () => {
+    const { result } = renderHook(() => useStylesTransformer());
+    const dom = document.createElement('html');
+    dom.innerHTML = '<head></head>';
+    result.current(dom);
+    const css = dom.querySelector('head > style')!.textContent!;
+
+    // Material's own shadow-DOM stylesheet keys its drawer/tablet layout off
+    // viewport media, so our overrides must stay in lockstep to avoid desync.
+    expect(css).toMatch(
+      /@media screen and \(max-width: 76\.1875em\)\s*\{[\s\S]*?\.md-sidebar--secondary:not\(\[hidden\]\)/,
+    );
+    expect(css).not.toContain('@container');
+    expect(css).not.toContain('container-type');
+    expect(css).not.toContain('container-name');
+    expect(css).not.toContain('--techdocs-main-breakpoint');
+  });
+
+  it('should use sticky in-flow sidebars instead of viewport-fixed pinning', () => {
+    const { result } = renderHook(() => useStylesTransformer());
+    const dom = document.createElement('html');
+    dom.innerHTML = '<head></head>';
+    result.current(dom);
+    const css = dom.querySelector('head > style')!.textContent!;
+
+    expect(css).toMatch(/\.md-sidebar\s*\{[^}]*position:\s*sticky/s);
+    expect(css).not.toMatch(/\.md-sidebar--secondary\s*\{[^}]*right:/s);
+    expect(css).not.toMatch(/\.md-content\s*\{[^}]*margin-left:\s*16rem/s);
+    expect(css).toContain('max-width: var(--techdocs-content-max-width');
+  });
+
+  it('should not fix the footer to the viewport', () => {
+    const { result } = renderHook(() => useStylesTransformer());
+    const dom = document.createElement('html');
+    dom.innerHTML = '<head></head>';
+    result.current(dom);
+    const css = dom.querySelector('head > style')!.textContent!;
+
+    expect(css).not.toMatch(/\.md-footer\s*\{[^}]*position:\s*fixed/s);
+  });
+
   it('should use headers relative font-size value as the factor for the md-typeset variable', () => {
     const theme = createTheme({
       typography: {
