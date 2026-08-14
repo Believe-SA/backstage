@@ -17,7 +17,6 @@
 import {
   injectStickyLayoutOverrides,
   STICKY_LAYOUT_OVERRIDE_STYLE_ID,
-  updateTechdocsSidebarTop,
 } from './injectStickyLayoutOverrides';
 
 describe('injectStickyLayoutOverrides', () => {
@@ -29,9 +28,16 @@ describe('injectStickyLayoutOverrides', () => {
 
     const style = dom.querySelector(`#${STICKY_LAYOUT_OVERRIDE_STYLE_ID}`);
     expect(style).not.toBeNull();
-    expect(style?.textContent).toContain('overflow-y: visible !important');
+    expect(style?.textContent).toContain(
+      '--techdocs-sidebar-scroll-max-height',
+    );
+    expect(style?.textContent).toContain('100dvh');
+    expect(style?.textContent).toContain('overflow-y: auto !important');
     expect(style?.textContent).toContain('max-height: none !important');
-    expect(style?.textContent).not.toContain('100svh');
+    expect(style?.textContent).toContain('height: auto !important');
+    expect(style?.textContent).toContain('.md-sidebar .md-nav');
+    expect(style?.textContent).toContain('margin-bottom: 0 !important');
+    expect(style?.textContent).not.toContain('scrollwrap--scrollable');
   });
 
   it('does not inject duplicate override stylesheets', () => {
@@ -44,24 +50,5 @@ describe('injectStickyLayoutOverrides', () => {
     expect(
       dom.querySelectorAll(`#${STICKY_LAYOUT_OVERRIDE_STYLE_ID}`),
     ).toHaveLength(1);
-  });
-});
-
-describe('updateTechdocsSidebarTop', () => {
-  it('writes the reader page top offset into a CSS custom property', () => {
-    const page = document.createElement('main');
-    page.className = 'techdocs-reader-page';
-    document.body.appendChild(page);
-
-    page.getBoundingClientRect = () =>
-      ({
-        top: 96,
-      } as DOMRect);
-
-    updateTechdocsSidebarTop();
-
-    expect(page.style.getPropertyValue('--techdocs-sidebar-top')).toBe('96px');
-
-    page.remove();
   });
 });

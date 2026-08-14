@@ -28,6 +28,7 @@ export default ({ theme }: RuleOptions) => `
   /* Layout (soft defaults — overridable by app or addon CSS) */
   --techdocs-sidebar-width: 16rem;
   --techdocs-sidebar-top: 0px;
+  --techdocs-sidebar-scroll-max-height: 100dvh;
   --techdocs-content-max-width: 100%;
 
   /* FONT */

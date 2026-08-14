@@ -150,6 +150,7 @@ const StyledPage = styled(Page)({
   '--techdocs-sidebar-width': '16rem',
   '--techdocs-content-max-width': '100%',
   '--techdocs-sidebar-top': '0px',
+  '--techdocs-sidebar-scroll-max-height': '100dvh',
 });
 
 /**

@@ -80,6 +80,7 @@ describe('Transformers > Styles', () => {
 
     expect(css).toContain('--techdocs-sidebar-width: 16rem');
     expect(css).toContain('--techdocs-sidebar-top: 0px');
+    expect(css).toContain('--techdocs-sidebar-scroll-max-height: 100dvh');
     expect(css).toContain('--techdocs-content-max-width: 100%');
   });
 
@@ -111,8 +112,19 @@ describe('Transformers > Styles', () => {
     expect(css).toMatch(/html,\s*body\s*\{[^}]*overflow:\s*visible/s);
     expect(css).toMatch(/\.md-sidebar\s*\{[^}]*position:\s*sticky/s);
     expect(css).toMatch(
-      /@media screen and \(min-width: 76\.25em\)[\s\S]*?\.md-sidebar \.md-sidebar__scrollwrap[\s\S]*?overflow-y:\s*visible/s,
+      /@media screen and \(min-width: 76\.25em\)[\s\S]*?\.md-sidebar\s*\{[\s\S]*?max-height:\s*calc\([\s\S]*?--techdocs-sidebar-scroll-max-height/s,
     );
+    expect(css).toMatch(
+      /@media screen and \(min-width: 76\.25em\)[\s\S]*?\.md-sidebar \.md-sidebar__scrollwrap[\s\S]*?overflow-y:\s*auto/s,
+    );
+    expect(css).toMatch(
+      /@media screen and \(min-width: 76\.25em\)[\s\S]*?\.md-sidebar \.md-sidebar__scrollwrap[\s\S]*?max-height:\s*none/s,
+    );
+    expect(css).toMatch(
+      /@media screen and \(min-width: 76\.25em\)[\s\S]*?\.md-sidebar \.md-nav[\s\S]*?margin-bottom:\s*0/s,
+    );
+    expect(css).toContain('--techdocs-sidebar-scroll-max-height');
+    expect(css).not.toMatch(/scrollwrap--scrollable/);
     expect(css).not.toMatch(/\.md-sidebar--secondary\s*\{[^}]*right:/s);
     expect(css).not.toMatch(/\.md-content\s*\{[^}]*margin-left:\s*16rem/s);
     expect(css).toContain('max-width: var(--techdocs-content-max-width');

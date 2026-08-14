@@ -132,22 +132,41 @@ export default ({ theme, sidebar }: RuleOptions) => `
 
 @media screen and (min-width: 76.25em) {
   .md-sidebar {
-    /* Override Material's height: 0 + JS sizing — use native sticky in Backstage */
+    /*
+      Material sets height: 0 on desktop and sizes scrollwrap via JS. TechDocs
+      does not run that JS, so height: 0 + scrollwrap height: 100% (PR #31483)
+      collapses scrollwrap below .md-sidebar__inner and forces a scrollbar even
+      on short nav. Size the sidebar from content and cap it instead.
+    */
     height: auto !important;
+    max-height: calc(
+      var(--techdocs-sidebar-scroll-max-height, 100dvh) -
+        var(--techdocs-sidebar-top, 0px)
+    );
+    display: flex;
+    flex-direction: column;
     /* Less padding before the Previous / Next buttons */
     padding-bottom: 0 !important;
   }
 
-  /*
-    Material sets overflow-y: auto (+ scrollbar-gutter: stable) on scrollwrap.
-    Without MkDocs JS to size it, max-height here caused a second scrollbar
-    beside the page even when nav/TOC fit — use page scroll instead (no-js path).
-  */
   .md-sidebar .md-sidebar__scrollwrap {
+    flex: 1 1 auto;
+    min-height: 0;
     height: auto !important;
     max-height: none !important;
-    overflow-y: visible !important;
+    overflow-y: auto !important;
+    /* Material sets stable, which reserves a permanent gutter on both sidebars */
     scrollbar-gutter: auto !important;
+  }
+
+  /*
+    Material tightens sidebar spacing with a negative bottom margin on nav
+    (margin-bottom: -.4rem / -.5rem). Inside scrollwrap that shrinks the
+    scrollport ~6px below .md-sidebar__inner, so overflow-y: auto shows a
+    phantom scrollbar on short trees.
+  */
+  .md-sidebar .md-nav {
+    margin-bottom: 0;
   }
 }
 

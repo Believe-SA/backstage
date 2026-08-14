@@ -46,13 +46,25 @@ export const stickyLayoutOverrideCss = `
     right: auto !important;
     bottom: auto !important;
     height: auto !important;
+    max-height: calc(
+      var(--techdocs-sidebar-scroll-max-height, 100dvh) -
+        var(--techdocs-sidebar-top, 0px)
+    ) !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .md-sidebar .md-sidebar__scrollwrap {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     height: auto !important;
     max-height: none !important;
-    overflow-y: visible !important;
+    overflow-y: auto !important;
     scrollbar-gutter: auto !important;
+  }
+
+  .md-sidebar .md-nav {
+    margin-bottom: 0 !important;
   }
 }
 `;
