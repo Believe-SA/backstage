@@ -29,6 +29,7 @@ describe('injectStickyLayoutOverrides', () => {
 
     const style = dom.querySelector(`#${STICKY_LAYOUT_OVERRIDE_STYLE_ID}`);
     expect(style).not.toBeNull();
+    expect(style?.textContent).toContain('overflow: clip !important');
     expect(style?.textContent).toContain(
       '--techdocs-sidebar-scroll-max-height',
     );

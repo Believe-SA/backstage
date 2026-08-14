@@ -40,7 +40,9 @@ import {
   useTheme,
 } from '@material-ui/core/styles';
 import { useExternalRedirect } from './useExternalRedirect';
-import './TechDocsReaderPage.module.css';
+import styles from './TechDocsReaderPage.module.css';
+
+const readerPageClassName = `techdocs-reader-page ${styles.readerPage}`;
 
 /* An explanation for the multiple ways of customizing the TechDocs reader page
 
@@ -141,7 +143,7 @@ export type TechDocsReaderLayoutProps = {
 export const TechDocsReaderLayout = (props: TechDocsReaderLayoutProps) => {
   const { withSearch, withHeader = true } = props;
   return (
-    <Page themeId="documentation" className="techdocs-reader-page">
+    <Page themeId="documentation" className={readerPageClassName}>
       {withHeader && <TechDocsReaderPageHeader />}
       <TechDocsReaderPageSubheader />
       <TechDocsReaderPageContent withSearch={withSearch} />
@@ -235,7 +237,7 @@ export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
       <CookieAuthRefreshProvider pluginId="techdocs">
         <TechDocsReaderPageProvider entityRef={memoizedEntityRef}>
           {({ metadata, entityMetadata, onReady }) => (
-            <Page themeId="documentation" className="techdocs-reader-page">
+            <Page themeId="documentation" className={readerPageClassName}>
               {children instanceof Function
                 ? children({
                     entityRef: memoizedEntityRef,

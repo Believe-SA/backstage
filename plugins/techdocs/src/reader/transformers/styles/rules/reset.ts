@@ -20,17 +20,20 @@ export default ({ theme }: RuleOptions) => `
 /*==================  Reset  ==================*/
 
 /*
-  Material uses overflow on html/body so the shadow tree becomes its own
+  Material sets overflow/height on shadow html/body so the tree becomes its own
   scrollport; sticky sidebars then track that inner scroller instead of the
-  Backstage page.
+  Backstage page. Clip html (not visible) so it cannot scroll; body flows to
+  the outer page/window scrollport.
 */
-html,
-body {
-  overflow: visible;
+html {
+  overflow: clip;
   height: auto;
+  min-height: 0;
 }
 
 body {
+  overflow: visible;
+  height: auto;
   --md-text-color: var(--md-default-fg-color);
   --md-text-link-color: var(--md-accent-fg-color);
   --md-text-font-family: ${theme.typography.fontFamily};

@@ -24,21 +24,27 @@ export const STICKY_LAYOUT_OVERRIDE_STYLE_ID =
  * sticky/flex rules live in layout.ts (injected earlier via styles transformer).
  */
 export const stickyLayoutOverrideCss = `
+html {
+  overflow: clip !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+body {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: auto !important;
+  display: block !important;
+}
+
+.md-container,
+.md-main,
+.md-main__inner {
+  overflow: visible !important;
+  height: auto !important;
+}
+
 @media screen and (min-width: 76.25em) {
-  html,
-  body {
-    overflow: visible !important;
-    height: auto !important;
-    min-height: auto !important;
-  }
-
-  .md-container,
-  .md-main,
-  .md-main__inner {
-    overflow: visible !important;
-    height: auto !important;
-  }
-
   .md-sidebar,
   .md-sidebar--primary,
   .md-sidebar--secondary {

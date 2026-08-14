@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-:global(.techdocs-reader-page) {
-  height: auto;
+/*
+ * Local class — must be applied on <Page> so webpack keeps this module.
+ * `@backstage/plugin-techdocs` sets "sideEffects": false; a side-effect-only
+ * import of a :global-only stylesheet is dropped from the bundle.
+ */
+.readerPage {
+  height: auto !important;
   min-height: 100vh;
-  overflow-y: visible;
+  overflow-y: visible !important;
   --techdocs-sidebar-width: 16rem;
   --techdocs-content-max-width: 100%;
   --techdocs-sidebar-top: 0px;
@@ -25,12 +30,42 @@
 }
 
 /*
- * Keep TechDocs on the app/window scrollport so sticky sidebars work and the
- * Backstage Page scrollbar does not jiggle at exactly 100vh.
+ * Entity Docs tab — flatten the nested reader Page so it is not its own 100vh
+ * grid scrollport. Matches .readerPage as a descendant of the outer catalog
+ * Page. Standalone reader puts .readerPage on the Page itself, so this does
+ * not apply there.
  */
-:global([data-backstage-core-page].techdocs-reader-page),
-:global([data-backstage-core-page]:has(.techdocs-reader-page)) {
-  overflow-y: visible !important;
+:global([data-backstage-core-page]) .readerPage {
   height: auto !important;
-  min-height: 100vh;
+  min-height: auto !important;
+  display: block !important;
+  overflow: visible !important;
+  grid-template-areas: none !important;
+  grid-template-rows: none !important;
+  grid-template-columns: none !important;
+}
+
+/* Shadow host must not become an intermediate scrollport */
+.readerPage :global([data-testid='techdocs-native-shadowroot']) {
+  display: block;
+  overflow: visible;
+}
+
+/*
+ * Inner TechDocs <Content>. Applied via className={styles.content}.
+ * !important beats MUI JSS `.BackstageContent-root-*` and its sm breakpoint.
+ */
+.content {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/*
+ * Outer EntityLayout <Content> that wraps the Docs tab. That article contains
+ * `.techdocs-reader-page`; the inner Content does not. Standalone /docs has
+ * no wrapping Content outside the reader Page, so this does not apply there.
+ */
+:global(article:has(.techdocs-reader-page)) {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }

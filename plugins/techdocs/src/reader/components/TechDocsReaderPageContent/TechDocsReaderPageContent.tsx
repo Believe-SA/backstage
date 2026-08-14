@@ -27,6 +27,7 @@ import { TechDocsStateIndicator } from '../TechDocsStateIndicator';
 import { withTechDocsReaderProvider } from '../TechDocsReaderProvider';
 import { TechDocsReaderPageContentAddons } from './TechDocsReaderPageContentAddons';
 import { useTechDocsReaderContentData } from '../../../hooks/useTechDocsReaderContentData';
+import styles from '../TechDocsReaderPage/TechDocsReaderPage.module.css';
 
 const useStyles = makeStyles({
   search: {
@@ -101,7 +102,7 @@ export const TechDocsReaderPageContent = withTechDocsReaderProvider(
 
     if (!isDomReady) {
       return (
-        <Content>
+        <Content className={styles.content}>
           <Grid container>
             <Grid xs={12} item>
               <TechDocsStateIndicator />
@@ -112,7 +113,7 @@ export const TechDocsReaderPageContent = withTechDocsReaderProvider(
     }
 
     return (
-      <Content>
+      <Content className={styles.content}>
         <Grid container>
           <Grid xs={12} item>
             <TechDocsStateIndicator />
