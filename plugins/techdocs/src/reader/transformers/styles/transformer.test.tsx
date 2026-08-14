@@ -71,68 +71,29 @@ describe('Transformers > Styles', () => {
     expect(stray).toEqual([]);
   });
 
-  it('should declare soft TechDocs layout custom properties on :host', () => {
+  it('should stick sidebars to the page scrollport only on wide viewports', () => {
     const { result } = renderHook(() => useStylesTransformer());
     const dom = document.createElement('html');
     dom.innerHTML = '<head></head>';
     result.current(dom);
     const css = dom.querySelector('head > style')!.textContent!;
 
-    expect(css).toContain('--techdocs-sidebar-width: 16rem');
-    expect(css).toContain('--techdocs-sidebar-top: 0px');
-    expect(css).toContain('--techdocs-sidebar-scroll-max-height: 100dvh');
-    expect(css).toContain('--techdocs-content-max-width: 100%');
-  });
-
-  it('should key narrow sidebar/drawer layout off viewport media, matching MkDocs Material', () => {
-    const { result } = renderHook(() => useStylesTransformer());
-    const dom = document.createElement('html');
-    dom.innerHTML = '<head></head>';
-    result.current(dom);
-    const css = dom.querySelector('head > style')!.textContent!;
-
-    // Material's own shadow-DOM stylesheet keys its drawer/tablet layout off
-    // viewport media, so our overrides must stay in lockstep to avoid desync.
-    expect(css).toMatch(
-      /@media screen and \(max-width: 76\.1875em\)\s*\{[\s\S]*?\.md-sidebar--secondary:not\(\[hidden\]\)/,
-    );
-    expect(css).not.toContain('@container');
-    expect(css).not.toContain('container-type');
-    expect(css).not.toContain('container-name');
-    expect(css).not.toContain('--techdocs-main-breakpoint');
-  });
-
-  it('should use sticky in-flow sidebars instead of viewport-fixed pinning', () => {
-    const { result } = renderHook(() => useStylesTransformer());
-    const dom = document.createElement('html');
-    dom.innerHTML = '<head></head>';
-    result.current(dom);
-    const css = dom.querySelector('head > style')!.textContent!;
-
+    // The shadow tree must not become its own scrollport, otherwise sticky
+    // sidebars track it instead of the Backstage page.
     expect(css).toMatch(/html\s*\{[^}]*overflow:\s*clip/s);
     expect(css).toMatch(/body\s*\{[^}]*overflow:\s*visible/s);
     expect(css).toMatch(/\.md-main__inner\s*\{[^}]*display:\s*flex/s);
-    expect(css).toMatch(/\.md-sidebar\s*\{[^}]*position:\s*sticky/s);
-    expect(css).toMatch(
-      /\.md-sidebar\s*\{[^}]*top:\s*var\(--techdocs-sidebar-top/s,
-    );
-    expect(css).not.toMatch(/\.md-sidebar--secondary\s*\{[^}]*right:/s);
-    expect(css).not.toMatch(/\.md-content\s*\{[^}]*margin-left:\s*16rem/s);
     expect(css).toContain('max-width: var(--techdocs-content-max-width');
-    // Desktop Material overrides (scrollwrap height, nav margin) live in
-    // injectStickyLayoutOverrides, appended after Material CSS loads.
-    expect(css).not.toMatch(
-      /@media screen and \(min-width: 76\.25em\)[\s\S]*?\.md-sidebar \.md-sidebar__scrollwrap/s,
+
+    // Sticky positioning is scoped to the wide breakpoint; narrower viewports
+    // keep Material's fixed off-canvas drawer.
+    expect(css).toMatch(
+      /@media screen and \(min-width: 76\.25em\)\s*\{[\s\S]*?position:\s*sticky/,
     );
-  });
-
-  it('should not fix the footer to the viewport', () => {
-    const { result } = renderHook(() => useStylesTransformer());
-    const dom = document.createElement('html');
-    dom.innerHTML = '<head></head>';
-    result.current(dom);
-    const css = dom.querySelector('head > style')!.textContent!;
-
+    expect(css).not.toMatch(/^\.md-sidebar\s*\{[^}]*position:\s*sticky/ms);
+    expect(css).toMatch(
+      /@media screen and \(max-width: 76\.1875em\)\s*\{[\s\S]*?\.md-sidebar--secondary:not\(\[hidden\]\)/,
+    );
     expect(css).not.toMatch(/\.md-footer\s*\{[^}]*position:\s*fixed/s);
   });
 

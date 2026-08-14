@@ -25,12 +25,6 @@ export default ({ theme }: RuleOptions) => `
 */
 
 :host {
-  /* Layout (soft defaults — overridable by app or addon CSS) */
-  --techdocs-sidebar-width: 16rem;
-  --techdocs-sidebar-top: 0px;
-  --techdocs-sidebar-scroll-max-height: 100dvh;
-  --techdocs-content-max-width: 100%;
-
   /* FONT */
   --md-default-fg-color: ${theme.palette.text.primary};
   --md-default-fg-color--light: ${theme.palette.text.secondary};

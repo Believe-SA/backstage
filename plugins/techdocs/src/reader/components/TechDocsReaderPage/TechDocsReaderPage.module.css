@@ -23,10 +23,9 @@
   height: auto !important;
   min-height: 100vh;
   overflow-y: visible !important;
+  /* Soft defaults — inherited into the shadow DOM, overridable by app CSS. */
   --techdocs-sidebar-width: 16rem;
   --techdocs-content-max-width: 100%;
-  --techdocs-sidebar-top: 0px;
-  --techdocs-sidebar-scroll-max-height: 100dvh;
 }
 
 /*

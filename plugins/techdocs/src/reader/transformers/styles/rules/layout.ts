@@ -80,21 +80,6 @@ export default ({ theme, sidebar }: RuleOptions) => `
   height: auto;
 }
 
-.md-sidebar {
-  position: sticky;
-  top: var(--techdocs-sidebar-top, 0px);
-  left: auto;
-  right: auto;
-  bottom: auto;
-  width: var(--techdocs-sidebar-width, 16rem);
-  flex-shrink: 0;
-  align-self: flex-start;
-  height: auto;
-}
-.md-sidebar .md-sidebar__scrollwrap {
-  width: var(--techdocs-sidebar-width, 16rem);
-}
-
 @supports selector(::-webkit-scrollbar) {
   [dir=ltr] .md-sidebar__inner {
       padding-right: calc(100% - 15.1rem);
@@ -122,6 +107,40 @@ export default ({ theme, sidebar }: RuleOptions) => `
 
 .md-dialog {
   background-color: unset;
+}
+
+/*
+  Desktop: sidebars stay in flow and stick to the Backstage page scrollport.
+  Only the nav itself scrolls, so short trees show no scrollbar at all.
+  Narrower viewports keep Material's own off-canvas drawer, which is fixed
+  positioned - do not make those sticky.
+*/
+@media screen and (min-width: 76.25em) {
+  /* :not([hidden]) only to outrank Material's own display rule on the TOC. */
+  .md-sidebar,
+  .md-sidebar--secondary:not([hidden]) {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    width: var(--techdocs-sidebar-width, 16rem);
+    height: auto;
+    max-height: 100dvh;
+    padding-bottom: 0;
+  }
+  .md-sidebar .md-sidebar__scrollwrap {
+    width: var(--techdocs-sidebar-width, 16rem);
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    scrollbar-gutter: auto;
+  }
+  .md-sidebar .md-nav {
+    margin-bottom: 0;
+  }
 }
 
 @media screen and (max-width: 76.1875em) {

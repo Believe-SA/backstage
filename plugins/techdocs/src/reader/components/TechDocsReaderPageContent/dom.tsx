@@ -34,8 +34,6 @@ import {
   addGitFeedbackLink,
   addLinkClickListener,
   addSidebarToggle,
-  injectStickyLayoutOverrides,
-  updateTechdocsSidebarTop,
   onCssReady,
   removeMkdocsHeader,
   rewriteDocLinks,
@@ -93,28 +91,6 @@ export const useTechDocsReaderDom = (
   useShadowDomStylesLoading(dom);
 
   useInitialRedirect(defaultPath);
-
-  useEffect(() => {
-    if (!dom) {
-      return undefined;
-    }
-
-    const syncSidebarTop = () => {
-      updateTechdocsSidebarTop();
-    };
-
-    syncSidebarTop();
-    window.addEventListener('resize', syncSidebarTop);
-    window.addEventListener('scroll', syncSidebarTop, {
-      capture: true,
-      passive: true,
-    });
-
-    return () => {
-      window.removeEventListener('resize', syncSidebarTop);
-      window.removeEventListener('scroll', syncSidebarTop, true);
-    };
-  }, [dom]);
 
   // a function that performs transformations that are executed prior to adding it to the DOM
   const preRender = useCallback(
@@ -207,8 +183,6 @@ export const useTechDocsReaderDom = (
         onCssReady({
           onLoading: () => {},
           onLoaded: () => {
-            injectStickyLayoutOverrides(transformedElement);
-            updateTechdocsSidebarTop();
             transformedElement
               .querySelector('.md-nav__title')
               ?.removeAttribute('for');
