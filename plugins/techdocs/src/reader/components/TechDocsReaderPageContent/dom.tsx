@@ -87,8 +87,6 @@ export const useTechDocsReaderDom = (
   const { '*': currPath = '' } = useParams();
 
   const [dom, setDom] = useState<HTMLElement | null>(null);
-  // Drives the fade-in of the shadow DOM content while its styles load.
-  useShadowDomStylesLoading(dom);
 
   useInitialRedirect(defaultPath);
 

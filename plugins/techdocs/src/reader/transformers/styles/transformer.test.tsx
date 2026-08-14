@@ -83,7 +83,6 @@ describe('Transformers > Styles', () => {
     expect(css).toMatch(/html\s*\{[^}]*overflow:\s*clip/s);
     expect(css).toMatch(/body\s*\{[^}]*overflow:\s*visible/s);
     expect(css).toMatch(/\.md-main__inner\s*\{[^}]*display:\s*flex/s);
-    expect(css).toContain('max-width: var(--techdocs-content-max-width');
 
     // Sticky positioning is scoped to the wide breakpoint; narrower viewports
     // keep Material's fixed off-canvas drawer.

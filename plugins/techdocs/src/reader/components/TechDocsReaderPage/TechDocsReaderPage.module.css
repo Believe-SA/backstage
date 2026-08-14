@@ -23,9 +23,8 @@
   height: auto !important;
   min-height: 100vh;
   overflow-y: visible !important;
-  /* Soft defaults — inherited into the shadow DOM, overridable by app CSS. */
+  /* Inherited into the shadow DOM, overridable by app CSS. */
   --techdocs-sidebar-width: 16rem;
-  --techdocs-content-max-width: 100%;
 }
 
 /*
@@ -51,10 +50,13 @@
 }
 
 /*
- * Inner TechDocs <Content>. Applied via className={styles.content}.
+ * Inner TechDocs <Content>, applied via className={styles.content}. Only when
+ * the reader is nested in another page's main element — the entity tab, which
+ * already supplies its own gutter. The standalone reader is the outermost
+ * <main> and keeps the padding <Content> normally gives it.
  * !important beats MUI JSS `.BackstageContent-root-*` and its sm breakpoint.
  */
-.content {
+:global(main) .readerPage .content {
   padding-left: 0 !important;
   padding-right: 0 !important;
 }

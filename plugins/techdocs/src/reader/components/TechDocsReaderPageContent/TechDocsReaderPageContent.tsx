@@ -32,11 +32,10 @@ import styles from '../TechDocsReaderPage/TechDocsReaderPage.module.css';
 const useStyles = makeStyles({
   search: {
     width: '100%',
-    maxWidth: 'var(--techdocs-content-max-width, 100%)',
-    margin: '0 auto',
-    // Match main column: full width minus two sidebars when the reader is wide.
-    '@media (min-width: 76.1875em)': {
-      width: 'calc(100% - (2 * var(--techdocs-sidebar-width, 16rem)))',
+    // Same breakpoint the shadow-DOM sidebars use, so the two never disagree.
+    '@media (min-width: 76.25em)': {
+      width: 'calc(100% - 34.4rem)',
+      margin: '0 auto',
     },
     '@media print': {
       display: 'none',

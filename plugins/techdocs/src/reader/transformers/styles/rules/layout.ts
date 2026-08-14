@@ -28,9 +28,19 @@ export default ({ theme, sidebar }: RuleOptions) => `
   color: var(--md-default-fg-color);
 }
 
+/*
+  Material paints its own surfaces on these. Let them show whatever Backstage
+  page the reader is embedded in instead.
+*/
+.md-nav__title,
+.md-footer,
+.md-footer-meta {
+  background-color: unset;
+}
+
 .md-grid {
-  max-width: var(--techdocs-content-max-width, 100%);
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
 }
 
 .md-nav {
@@ -116,8 +126,13 @@ export default ({ theme, sidebar }: RuleOptions) => `
   positioned - do not make those sticky.
 */
 @media screen and (min-width: 76.25em) {
-  /* :not([hidden]) only to outrank Material's own display rule on the TOC. */
-  .md-sidebar,
+  /*
+    :not([hidden]) is load bearing twice over: it outranks Material's own
+    display rule on the TOC, and it keeps the mkdocs "hide: navigation" and
+    "hide: toc" front matter working — mkdocs marks those sidebars [hidden]
+    and relies on the UA display:none, which any author display would beat.
+  */
+  .md-sidebar:not([hidden]),
   .md-sidebar--secondary:not([hidden]) {
     position: sticky;
     top: 0;
@@ -136,7 +151,6 @@ export default ({ theme, sidebar }: RuleOptions) => `
     min-height: 0;
     max-height: none;
     overflow-y: auto;
-    scrollbar-gutter: auto;
   }
   .md-sidebar .md-nav {
     margin-bottom: 0;
