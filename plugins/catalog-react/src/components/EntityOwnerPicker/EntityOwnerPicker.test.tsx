@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-import { Entity, stringifyEntityRef } from '@backstage/catalog-model';
+import {
+  Entity,
+  parseEntityRef,
+  stringifyEntityRef,
+} from '@backstage/catalog-model';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import {
   MockEntityListContextProvider,
@@ -207,7 +211,7 @@ describe('<EntityOwnerPicker mode="all" />', () => {
     );
 
     expect(mockCatalogApi.getEntitiesByRefs).toHaveBeenCalledWith({
-      entityRefs: ['another-owner'],
+      entityRefs: ['group:default/another-owner'],
     });
     expect(updateFilters).toHaveBeenLastCalledWith({
       owners: new EntityOwnerFilter(['group:default/another-owner']),
@@ -253,7 +257,7 @@ describe('<EntityOwnerPicker mode="all" />', () => {
     );
 
     expect(mockCatalogApi.getEntitiesByRefs).toHaveBeenCalledWith({
-      entityRefs: ['another-owner'],
+      entityRefs: ['group:default/another-owner'],
     });
 
     fireEvent.click(screen.getByTestId('owner-picker-expand'));
@@ -345,7 +349,7 @@ describe('<EntityOwnerPicker mode="all" />', () => {
       </ApiProvider>,
     );
     expect(mockCatalogApi.getEntitiesByRefs).toHaveBeenCalledWith({
-      entityRefs: ['team-a'],
+      entityRefs: ['group:default/team-a'],
     });
     expect(updateFilters).toHaveBeenLastCalledWith({
       owners: new EntityOwnerFilter(['group:default/team-a']),
@@ -615,6 +619,49 @@ describe('<EntityOwnerPicker mode="owners-only" />', () => {
     expect(updateFilters).toHaveBeenLastCalledWith({
       owners: new EntityOwnerFilter(['group:default/team-b']),
     });
+  });
+
+  it('does not crash when query parameters use shortened owner refs', async () => {
+    const mockPresentationApi = {
+      forEntity: jest.fn((ref: string) => {
+        // DefaultEntityPresentationApi throws on refs without a kind.
+        parseEntityRef(ref);
+        const snapshot = { entityRef: ref, primaryTitle: ref };
+        return { snapshot, promise: Promise.resolve(snapshot) };
+      }),
+    };
+
+    const testApis = TestApiRegistry.from(
+      [catalogApiRef, mockCatalogApi],
+      [errorApiRef, mockErrorApi],
+      [entityPresentationApiRef, mockPresentationApi],
+    );
+
+    const updateFilters = jest.fn();
+    await renderInTestApp(
+      <ApiProvider apis={testApis}>
+        <MockEntityListContextProvider
+          value={{
+            updateFilters,
+            queryParameters: { owners: ['team-a', 'user:guest'] },
+          }}
+        >
+          <EntityOwnerPicker mode="owners-only" />
+        </MockEntityListContextProvider>
+      </ApiProvider>,
+    );
+
+    expect(updateFilters).toHaveBeenLastCalledWith({
+      owners: new EntityOwnerFilter([
+        'group:default/team-a',
+        'user:default/guest',
+      ]),
+    });
+    // Not even on the first render, before the effect runs.
+    expect(mockPresentationApi.forEntity).not.toHaveBeenCalledWith(
+      'team-a',
+      undefined,
+    );
   });
 
   it('renders human-readable titles using entity ref string for presentation lookup', async () => {

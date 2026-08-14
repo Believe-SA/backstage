@@ -149,8 +149,12 @@ export const EntityOwnerPicker = (props?: EntityOwnerPickerProps) => {
   const [text, setText] = useState('');
   const { t } = useTranslationRef(catalogReactTranslationRef);
 
+  // Query params may use shortened refs such as `team-a`.
   const queryParamOwners = useMemo(
-    () => [ownersParameter].flat().filter(Boolean) as string[],
+    () =>
+      new EntityOwnerFilter(
+        [ownersParameter].flat().filter(Boolean) as string[],
+      ).values,
     [ownersParameter],
   );
 
@@ -174,8 +178,7 @@ export const EntityOwnerPicker = (props?: EntityOwnerPickerProps) => {
   // external updates to the page location.
   useEffect(() => {
     if (queryParamOwners.length) {
-      const filter = new EntityOwnerFilter(queryParamOwners);
-      setSelectedOwners(filter.values);
+      setSelectedOwners(queryParamOwners);
     }
   }, [queryParamOwners]);
 
