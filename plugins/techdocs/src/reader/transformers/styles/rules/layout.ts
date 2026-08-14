@@ -77,6 +77,7 @@ export default ({ theme, sidebar }: RuleOptions) => `
 .md-main__inner {
   margin-top: 0;
   display: flex;
+  height: auto;
 }
 
 .md-container,
@@ -137,11 +138,15 @@ export default ({ theme, sidebar }: RuleOptions) => `
     padding-bottom: 0 !important;
   }
 
+  /*
+    Material sets overflow-y: auto (+ scrollbar-gutter: stable) on scrollwrap.
+    Without MkDocs JS to size it, max-height here caused a second scrollbar
+    beside the page even when nav/TOC fit — use page scroll instead (no-js path).
+  */
   .md-sidebar .md-sidebar__scrollwrap {
-    height: auto;
-    max-height: calc(100svh - var(--techdocs-sidebar-top, 0px));
-    overflow-y: auto;
-    /* Material sets stable, which reserves a permanent gutter on both sidebars */
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
     scrollbar-gutter: auto !important;
   }
 }

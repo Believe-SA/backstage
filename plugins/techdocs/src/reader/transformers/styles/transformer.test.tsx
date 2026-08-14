@@ -110,6 +110,9 @@ describe('Transformers > Styles', () => {
 
     expect(css).toMatch(/html,\s*body\s*\{[^}]*overflow:\s*visible/s);
     expect(css).toMatch(/\.md-sidebar\s*\{[^}]*position:\s*sticky/s);
+    expect(css).toMatch(
+      /@media screen and \(min-width: 76\.25em\)[\s\S]*?\.md-sidebar \.md-sidebar__scrollwrap[\s\S]*?overflow-y:\s*visible/s,
+    );
     expect(css).not.toMatch(/\.md-sidebar--secondary\s*\{[^}]*right:/s);
     expect(css).not.toMatch(/\.md-content\s*\{[^}]*margin-left:\s*16rem/s);
     expect(css).toContain('max-width: var(--techdocs-content-max-width');

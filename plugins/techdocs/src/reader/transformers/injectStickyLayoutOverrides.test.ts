@@ -29,8 +29,9 @@ describe('injectStickyLayoutOverrides', () => {
 
     const style = dom.querySelector(`#${STICKY_LAYOUT_OVERRIDE_STYLE_ID}`);
     expect(style).not.toBeNull();
-    expect(style?.textContent).toContain('position: sticky !important');
-    expect(style?.textContent).toContain('overflow: visible !important');
+    expect(style?.textContent).toContain('overflow-y: visible !important');
+    expect(style?.textContent).toContain('max-height: none !important');
+    expect(style?.textContent).not.toContain('100svh');
   });
 
   it('does not inject duplicate override stylesheets', () => {

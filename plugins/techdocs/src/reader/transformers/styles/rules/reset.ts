@@ -36,5 +36,8 @@ body {
   --md-text-font-family: ${theme.typography.fontFamily};
   font-family: var(--md-text-font-family);
   background-color: unset;
+  /* Material uses flex + min-height 100% — creates a nested scrollport in shadow DOM */
+  display: block;
+  min-height: auto;
 }
 `;
