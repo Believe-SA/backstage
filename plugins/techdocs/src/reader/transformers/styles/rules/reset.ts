@@ -19,6 +19,17 @@ import { RuleOptions } from './types';
 export default ({ theme }: RuleOptions) => `
 /*==================  Reset  ==================*/
 
+/*
+  Material sets overflow on html/body so the shadow tree becomes its own
+  scrollport; sticky sidebars then track that inner scroller instead of the
+  Backstage page. See techdocs/style-fix (never merged upstream).
+*/
+html,
+body {
+  overflow: visible;
+  height: auto;
+}
+
 body {
   --md-text-color: var(--md-default-fg-color);
   --md-text-link-color: var(--md-accent-fg-color);

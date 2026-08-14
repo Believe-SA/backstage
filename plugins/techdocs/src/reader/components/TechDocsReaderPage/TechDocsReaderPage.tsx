@@ -35,6 +35,7 @@ import {
 import { CookieAuthRefreshProvider } from '@backstage/plugin-auth-react';
 import {
   createTheme,
+  makeStyles,
   styled,
   ThemeOptions,
   ThemeProvider,
@@ -120,10 +121,31 @@ NOTE: Render functions are no longer supported in this approach.
 */
 
 /**
+ * Keep TechDocs on the app/window scrollport so sticky sidebars work and the
+ * Backstage Page scrollbar does not jiggle at exactly 100vh.
+ */
+const useTechDocsReaderPageScrollStyles = makeStyles({
+  '@global': {
+    '[data-backstage-core-page].techdocs-reader-page, [data-backstage-core-page]:has(.techdocs-reader-page)':
+      {
+        overflowY: 'visible !important',
+        height: 'auto !important',
+        minHeight: '100vh',
+      },
+  },
+});
+
+const TechDocsReaderPageScrollFix = () => {
+  useTechDocsReaderPageScrollStyles();
+  return null;
+};
+
+/**
  * Styled Backstage Page that fills available vertical space
  */
 const StyledPage = styled(Page)({
-  height: 'inherit',
+  height: 'auto',
+  minHeight: '100vh',
   overflowY: 'visible',
   '--techdocs-sidebar-width': '16rem',
   '--techdocs-content-max-width': '100%',
@@ -153,6 +175,7 @@ export const TechDocsReaderLayout = (props: TechDocsReaderLayoutProps) => {
   const { withSearch, withHeader = true } = props;
   return (
     <StyledPage themeId="documentation" className="techdocs-reader-page">
+      <TechDocsReaderPageScrollFix />
       {withHeader && <TechDocsReaderPageHeader />}
       <TechDocsReaderPageSubheader />
       <TechDocsReaderPageContent withSearch={withSearch} />
@@ -250,6 +273,7 @@ export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
               themeId="documentation"
               className="techdocs-reader-page"
             >
+              <TechDocsReaderPageScrollFix />
               {children instanceof Function
                 ? children({
                     entityRef: memoizedEntityRef,

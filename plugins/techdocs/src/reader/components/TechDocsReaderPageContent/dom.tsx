@@ -40,12 +40,14 @@ import {
   addGitFeedbackLink,
   addLinkClickListener,
   addSidebarToggle,
+  injectStickyLayoutOverrides,
   onCssReady,
   removeMkdocsHeader,
   rewriteDocLinks,
   simplifyMkdocsFooter,
   scrollIntoNavigation,
   transform as transformer,
+  updateTechdocsSidebarTop,
   copyToClipboard,
   useSanitizerTransformer,
   useStylesTransformer,
@@ -97,6 +99,23 @@ export const useTechDocsReaderDom = (
   useShadowDomStylesLoading(dom);
 
   useInitialRedirect(defaultPath);
+
+  useEffect(() => {
+    if (!dom) {
+      return undefined;
+    }
+
+    const handleResize = () => {
+      updateTechdocsSidebarTop();
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [dom]);
 
   // a function that performs transformations that are executed prior to adding it to the DOM
   const preRender = useCallback(
@@ -189,6 +208,8 @@ export const useTechDocsReaderDom = (
         onCssReady({
           onLoading: () => {},
           onLoaded: () => {
+            injectStickyLayoutOverrides(transformedElement);
+            updateTechdocsSidebarTop();
             transformedElement
               .querySelector('.md-nav__title')
               ?.removeAttribute('for');

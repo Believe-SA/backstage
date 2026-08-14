@@ -79,9 +79,17 @@ export default ({ theme, sidebar }: RuleOptions) => `
   display: flex;
 }
 
+.md-container,
+.md-main,
+.md-main__inner {
+  overflow: visible;
+}
+
 .md-sidebar {
   position: sticky;
   top: var(--techdocs-sidebar-top, 0px);
+  left: auto;
+  right: auto;
   bottom: auto;
   width: var(--techdocs-sidebar-width, 16rem);
   flex-shrink: 0;
@@ -90,8 +98,6 @@ export default ({ theme, sidebar }: RuleOptions) => `
 }
 .md-sidebar .md-sidebar__scrollwrap {
   width: var(--techdocs-sidebar-width, 16rem);
-  max-height: calc(100vh - var(--techdocs-sidebar-top, 0px) - 2rem);
-  overflow-y: auto;
 }
 
 @supports selector(::-webkit-scrollbar) {
@@ -105,7 +111,6 @@ export default ({ theme, sidebar }: RuleOptions) => `
   min-width: 0;
   max-width: none;
   margin-left: 0;
-  margin-bottom: 50px;
 }
 
 .md-footer {
@@ -126,9 +131,18 @@ export default ({ theme, sidebar }: RuleOptions) => `
 
 @media screen and (min-width: 76.25em) {
   .md-sidebar {
-    height: auto;
+    /* Override Material's height: 0 + JS sizing — use native sticky in Backstage */
+    height: auto !important;
     /* Less padding before the Previous / Next buttons */
     padding-bottom: 0 !important;
+  }
+
+  .md-sidebar .md-sidebar__scrollwrap {
+    height: auto;
+    max-height: calc(100svh - var(--techdocs-sidebar-top, 0px));
+    overflow-y: auto;
+    /* Material sets stable, which reserves a permanent gutter on both sidebars */
+    scrollbar-gutter: auto !important;
   }
 }
 

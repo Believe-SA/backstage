@@ -108,6 +108,7 @@ describe('Transformers > Styles', () => {
     result.current(dom);
     const css = dom.querySelector('head > style')!.textContent!;
 
+    expect(css).toMatch(/html,\s*body\s*\{[^}]*overflow:\s*visible/s);
     expect(css).toMatch(/\.md-sidebar\s*\{[^}]*position:\s*sticky/s);
     expect(css).not.toMatch(/\.md-sidebar--secondary\s*\{[^}]*right:/s);
     expect(css).not.toMatch(/\.md-content\s*\{[^}]*margin-left:\s*16rem/s);
