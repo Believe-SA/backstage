@@ -35,13 +35,12 @@ import {
 import { CookieAuthRefreshProvider } from '@backstage/plugin-auth-react';
 import {
   createTheme,
-  makeStyles,
-  styled,
   ThemeOptions,
   ThemeProvider,
   useTheme,
 } from '@material-ui/core/styles';
 import { useExternalRedirect } from './useExternalRedirect';
+import './TechDocsReaderPage.module.css';
 
 /* An explanation for the multiple ways of customizing the TechDocs reader page
 
@@ -121,39 +120,6 @@ NOTE: Render functions are no longer supported in this approach.
 */
 
 /**
- * Keep TechDocs on the app/window scrollport so sticky sidebars work and the
- * Backstage Page scrollbar does not jiggle at exactly 100vh.
- */
-const useTechDocsReaderPageScrollStyles = makeStyles({
-  '@global': {
-    '[data-backstage-core-page].techdocs-reader-page, [data-backstage-core-page]:has(.techdocs-reader-page)':
-      {
-        overflowY: 'visible !important',
-        height: 'auto !important',
-        minHeight: '100vh',
-      },
-  },
-});
-
-const TechDocsReaderPageScrollFix = () => {
-  useTechDocsReaderPageScrollStyles();
-  return null;
-};
-
-/**
- * Styled Backstage Page that fills available vertical space
- */
-const StyledPage = styled(Page)({
-  height: 'auto',
-  minHeight: '100vh',
-  overflowY: 'visible',
-  '--techdocs-sidebar-width': '16rem',
-  '--techdocs-content-max-width': '100%',
-  '--techdocs-sidebar-top': '0px',
-  '--techdocs-sidebar-scroll-max-height': '100dvh',
-});
-
-/**
  * Props for {@link TechDocsReaderLayout}
  * @public
  */
@@ -175,12 +141,11 @@ export type TechDocsReaderLayoutProps = {
 export const TechDocsReaderLayout = (props: TechDocsReaderLayoutProps) => {
   const { withSearch, withHeader = true } = props;
   return (
-    <StyledPage themeId="documentation" className="techdocs-reader-page">
-      <TechDocsReaderPageScrollFix />
+    <Page themeId="documentation" className="techdocs-reader-page">
       {withHeader && <TechDocsReaderPageHeader />}
       <TechDocsReaderPageSubheader />
       <TechDocsReaderPageContent withSearch={withSearch} />
-    </StyledPage>
+    </Page>
   );
 };
 
@@ -270,11 +235,7 @@ export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
       <CookieAuthRefreshProvider pluginId="techdocs">
         <TechDocsReaderPageProvider entityRef={memoizedEntityRef}>
           {({ metadata, entityMetadata, onReady }) => (
-            <StyledPage
-              themeId="documentation"
-              className="techdocs-reader-page"
-            >
-              <TechDocsReaderPageScrollFix />
+            <Page themeId="documentation" className="techdocs-reader-page">
               {children instanceof Function
                 ? children({
                     entityRef: memoizedEntityRef,
@@ -283,7 +244,7 @@ export const TechDocsReaderPage = (props: TechDocsReaderPageProps) => {
                     onReady,
                   })
                 : children}
-            </StyledPage>
+            </Page>
           )}
         </TechDocsReaderPageProvider>
       </CookieAuthRefreshProvider>

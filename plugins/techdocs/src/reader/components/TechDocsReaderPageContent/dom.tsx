@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  // useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 import { useTheme } from '@material-ui/core/styles';
 
@@ -105,15 +99,20 @@ export const useTechDocsReaderDom = (
       return undefined;
     }
 
-    const handleResize = () => {
+    const syncSidebarTop = () => {
       updateTechdocsSidebarTop();
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
+    syncSidebarTop();
+    window.addEventListener('resize', syncSidebarTop);
+    window.addEventListener('scroll', syncSidebarTop, {
+      capture: true,
+      passive: true,
+    });
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', syncSidebarTop);
+      window.removeEventListener('scroll', syncSidebarTop, true);
     };
   }, [dom]);
 

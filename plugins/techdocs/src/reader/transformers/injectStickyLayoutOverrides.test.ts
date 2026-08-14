@@ -17,6 +17,7 @@
 import {
   injectStickyLayoutOverrides,
   STICKY_LAYOUT_OVERRIDE_STYLE_ID,
+  updateTechdocsSidebarTop,
 } from './injectStickyLayoutOverrides';
 
 describe('injectStickyLayoutOverrides', () => {
@@ -38,6 +39,18 @@ describe('injectStickyLayoutOverrides', () => {
     expect(style?.textContent).toContain('.md-sidebar .md-nav');
     expect(style?.textContent).toContain('margin-bottom: 0 !important');
     expect(style?.textContent).not.toContain('scrollwrap--scrollable');
+  });
+
+  it('sets sidebar top offset from the reader page position', () => {
+    const page = document.createElement('div');
+    page.className = 'techdocs-reader-page';
+    document.body.appendChild(page);
+    page.getBoundingClientRect = () => ({ top: 48 } as DOMRect);
+
+    updateTechdocsSidebarTop();
+
+    expect(page.style.getPropertyValue('--techdocs-sidebar-top')).toBe('48px');
+    page.remove();
   });
 
   it('does not inject duplicate override stylesheets', () => {

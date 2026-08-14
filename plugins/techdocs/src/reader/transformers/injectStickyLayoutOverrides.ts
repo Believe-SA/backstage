@@ -19,8 +19,9 @@ export const STICKY_LAYOUT_OVERRIDE_STYLE_ID =
   'techdocs-sticky-layout-overrides';
 
 /**
- * Shadow-DOM / Backstage patches applied after MkDocs Material CSS loads.
- * Material already uses sticky sidebars; we only fix scrollport and chrome issues.
+ * Shadow-DOM patches applied after MkDocs Material CSS loads.
+ * Material wins the cascade for desktop sidebar height/scrollport; baseline
+ * sticky/flex rules live in layout.ts (injected earlier via styles transformer).
  */
 export const stickyLayoutOverrideCss = `
 @media screen and (min-width: 76.25em) {
@@ -52,6 +53,7 @@ export const stickyLayoutOverrideCss = `
     ) !important;
     display: flex !important;
     flex-direction: column !important;
+    padding-bottom: 0 !important;
   }
 
   .md-sidebar .md-sidebar__scrollwrap {
