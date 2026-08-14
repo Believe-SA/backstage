@@ -30,7 +30,8 @@ export default ({ theme, sidebar }: RuleOptions) => `
 
 /*
   Material paints its own surfaces on these. Let them show whatever Backstage
-  page the reader is embedded in instead.
+  page the reader is embedded in instead. .md-footer is deliberately not in this
+  list - it is sticky, so it has to stay opaque where it covers the document.
 */
 .md-nav__title,
 .md-footer,
@@ -103,8 +104,27 @@ export default ({ theme, sidebar }: RuleOptions) => `
   margin-left: 0;
 }
 
+/*
+  Keep the Previous / Next links reachable without measuring anything from
+  JavaScript. Sticky leaves the footer in flow, so it takes the width of the
+  reader column for free and settles at the end of the document once that
+  scrolls into view; its containing block is .md-container, which spans the
+  whole page.
+
+  Only the links themselves are painted and only they catch pointer events, so
+  the rest of the parked bar neither hides nor blocks the document underneath.
+  .md-footer-meta opts back in, otherwise its social and custom links would be
+  dead - that was the flaw in the old blanket pointer-events rule.
+*/
 .md-footer {
-  position: static;
+  position: sticky;
+  bottom: 0;
+  pointer-events: none;
+}
+.md-footer-meta,
+.md-footer-nav__link,
+.md-footer__link {
+  pointer-events: auto;
 }
 
 .md-footer__title {
@@ -113,6 +133,7 @@ export default ({ theme, sidebar }: RuleOptions) => `
 .md-footer-nav__link, .md-footer__link {
   width: auto;
   min-width: var(--techdocs-sidebar-width, 16rem);
+  background-color: var(--md-default-bg-color);
 }
 
 .md-dialog {
@@ -131,8 +152,12 @@ export default ({ theme, sidebar }: RuleOptions) => `
     display rule on the TOC, and it keeps the mkdocs "hide: navigation" and
     "hide: toc" front matter working — mkdocs marks those sidebars [hidden]
     and relies on the UA display:none, which any author display would beat.
+
+    The blog plugin nests a second sidebar inside the content column, which
+    Material lays out full width and static. Its rule ties with ours on
+    specificity and we are later in the cascade, so exclude it by hand.
   */
-  .md-sidebar:not([hidden]),
+  .md-sidebar:not([hidden]):not(.md-sidebar--post),
   .md-sidebar--secondary:not([hidden]) {
     position: sticky;
     top: 0;

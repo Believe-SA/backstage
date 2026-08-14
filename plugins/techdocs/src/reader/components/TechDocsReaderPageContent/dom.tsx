@@ -22,10 +22,7 @@ import { CompoundEntityRef } from '@backstage/catalog-model';
 import { configApiRef, useAnalytics, useApi } from '@backstage/core-plugin-api';
 import { scmIntegrationsApiRef } from '@backstage/integration-react';
 
-import {
-  techdocsStorageApiRef,
-  useShadowDomStylesLoading,
-} from '@backstage/plugin-techdocs-react';
+import { techdocsStorageApiRef } from '@backstage/plugin-techdocs-react';
 
 import { useTechDocsReader } from '../TechDocsReaderProvider';
 

@@ -23,8 +23,6 @@
   height: auto !important;
   min-height: 100vh;
   overflow-y: visible !important;
-  /* Inherited into the shadow DOM, overridable by app CSS. */
-  --techdocs-sidebar-width: 16rem;
 }
 
 /*

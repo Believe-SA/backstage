@@ -12,6 +12,8 @@ nav:
       - deeper-nav/index.md
       - 'Inner Deeper Nav':
           - 'Inner Inner Deeper Nav': deeper-nav/even-deeper/index.md
+  - Blog: blog/index.md
 
 plugins:
   - techdocs-core
+  - material/blog

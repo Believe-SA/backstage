@@ -96,6 +96,29 @@ describe('Transformers > Styles', () => {
     expect(css).not.toMatch(/\.md-footer\s*\{[^}]*position:\s*fixed/s);
   });
 
+  it('should keep the footer reachable without pinning it to the viewport', () => {
+    const { result } = renderHook(() => useStylesTransformer());
+    const dom = document.createElement('html');
+    dom.innerHTML = '<head></head>';
+    result.current(dom);
+    const css = dom.querySelector('head > style')!.textContent!;
+
+    // Sticky keeps the footer in flow, so it needs no JavaScript to size it.
+    expect(css).toMatch(/\.md-footer\s*\{[^}]*position:\s*sticky/s);
+    expect(css).toMatch(/\.md-footer\s*\{[^}]*bottom:\s*0/s);
+
+    // Only the links are painted and clickable; the rest of the parked bar
+    // must neither hide nor block the document scrolling underneath it.
+    expect(css).toMatch(/\.md-footer\s*\{[^}]*pointer-events:\s*none/s);
+    expect(css).toMatch(
+      /\.md-footer-nav__link, \.md-footer__link \{[^}]*background-color:\s*var\(--md-default-bg-color\)/s,
+    );
+    // Footer meta opts back in, otherwise its own links would be dead.
+    expect(css).toMatch(
+      /\.md-footer-meta,\s*\.md-footer-nav__link,\s*\.md-footer__link \{[^}]*pointer-events:\s*auto/s,
+    );
+  });
+
   it('should use headers relative font-size value as the factor for the md-typeset variable', () => {
     const theme = createTheme({
       typography: {
