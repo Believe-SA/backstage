@@ -235,6 +235,35 @@ export default ({ theme, sidebar }: RuleOptions) => `
   }
 }
 
+/*
+  Parking the footer only pays off where the nav can be measured against it.
+  Without scroll-driven animations there is no way to know how much room is
+  left above the parked bar, and the nav would run underneath the Previous /
+  Next links on the first screenful. So do not park it there at all: the footer
+  returns to the end of the document, which is where Material puts it, and the
+  sidebars get the whole viewport because nothing is covering them any more.
+  Everything stays reachable - the links by scrolling to the end of the page.
+*/
+@supports not (animation-timeline: view()) {
+  @media screen and (min-width: 76.25em) {
+    .md-footer {
+      position: static;
+    }
+    .md-sidebar--primary:not([hidden]) > .md-sidebar__scrollwrap,
+    .md-sidebar--secondary:not([hidden]) > .md-sidebar__scrollwrap {
+      /*
+        The keyframes still apply here: with no timeline the animation has no
+        duration and its fill lands on the end value, which would keep
+        reserving a band for a footer that is no longer parked. An animated
+        value outranks a normal declaration, so the max-height below only takes
+        effect once the animation is off.
+      */
+      animation: none;
+      max-height: 100dvh;
+    }
+  }
+}
+
 @media screen and (max-width: 76.1875em) {
   .md-nav {
     transition: none !important;

@@ -147,6 +147,15 @@ describe('Transformers > Styles', () => {
       /@keyframes techdocs-sidebar-fill \{[^@]*to \{\s*max-height:\s*calc\(100dvh - 5rem\)/s,
     );
     expect(css).toMatch(/animation-range:\s*cover 5rem cover 100dvh/);
+
+    // Parking the footer is only safe where that measurement is available.
+    // Without it the nav cannot know where to stop, so the footer has to go
+    // back to the end of the document rather than sit on top of the nav.
+    const fallback = css.match(
+      /@supports not \(animation-timeline: view\(\)\) \{[\s\S]*?\n\}/,
+    )![0];
+    expect(fallback).toMatch(/\.md-footer \{[^}]*position:\s*static/s);
+    expect(fallback).toMatch(/max-height:\s*100dvh/);
   });
 
   it('should use headers relative font-size value as the factor for the md-typeset variable', () => {
