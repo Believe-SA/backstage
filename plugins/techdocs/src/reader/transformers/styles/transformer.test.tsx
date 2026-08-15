@@ -84,10 +84,24 @@ describe('Transformers > Styles', () => {
     expect(css).toMatch(/body\s*\{[^}]*overflow:\s*visible/s);
     expect(css).toMatch(/\.md-main__inner\s*\{[^}]*display:\s*flex/s);
 
-    // Sticky positioning is scoped to the wide breakpoint; narrower viewports
-    // keep Material's fixed off-canvas drawer.
-    expect(css).toMatch(
-      /@media screen and \(min-width: 76\.25em\)\s*\{[\s\S]*?position:\s*sticky/,
+    const desktop = css.match(
+      /@media screen and \(min-width: 76\.25em\)\s*\{[\s\S]*?\n\}/,
+    )![0];
+
+    // The column carries the view timeline, so it must stay in flow: a sticky
+    // subject never leaves the viewport and its timeline would then span the
+    // whole document instead of one viewport height. It also has to stretch,
+    // or the scrollwrap that sticks inside it gets no travel at all.
+    expect(desktop).toMatch(
+      /\.md-sidebar--primary:not\(\[hidden\]\),\s*\.md-sidebar--secondary:not\(\[hidden\]\) \{[^}]*position:\s*static/s,
+    );
+    expect(desktop).toMatch(/align-self:\s*stretch/);
+    expect(desktop).toMatch(/view-timeline-name:\s*--techdocs-sidebar/);
+
+    // Sticky moved onto the scrollwrap, and is scoped to the wide breakpoint;
+    // narrower viewports keep Material's fixed off-canvas drawer.
+    expect(desktop).toMatch(
+      /\.md-sidebar__scrollwrap \{[^}]*position:\s*sticky/s,
     );
     expect(css).not.toMatch(/^\.md-sidebar\s*\{[^}]*position:\s*sticky/ms);
     expect(css).toMatch(
@@ -117,6 +131,22 @@ describe('Transformers > Styles', () => {
     expect(css).toMatch(
       /\.md-footer-meta,\s*\.md-footer-nav__link,\s*\.md-footer__link \{[^}]*pointer-events:\s*auto/s,
     );
+
+    // The links park in the sidebar columns, so the nav must stop above them.
+    // The static max-height is what browsers without scroll-driven animations
+    // fall back to, and is also the value the timeline settles on once the
+    // column has scrolled off the top.
+    expect(css).toMatch(
+      /@media screen and \(min-width: 76\.25em\)[\s\S]*?max-height:\s*calc\(100dvh - 5rem\)/,
+    );
+
+    // Before that, the nav is grown to exactly the gap above the parked footer.
+    // Both ends of the range must agree with the reserved band, or the nav
+    // reaches the links: the range has to start where free space hits zero.
+    expect(css).toMatch(
+      /@keyframes techdocs-sidebar-fill \{[^@]*to \{\s*max-height:\s*calc\(100dvh - 5rem\)/s,
+    );
+    expect(css).toMatch(/animation-range:\s*cover 5rem cover 100dvh/);
   });
 
   it('should use headers relative font-size value as the factor for the md-typeset variable', () => {

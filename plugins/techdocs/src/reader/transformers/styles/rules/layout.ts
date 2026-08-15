@@ -16,6 +16,12 @@
 
 import { RuleOptions } from './types';
 
+const TECHDOCS_SIDEBAR_WIDTH = '16rem';
+// Height of the parked footer bar. Measured at 79px with the default theme and
+// rounded up, so the sidebars always clear the Previous / Next links. Erring
+// high only widens the gap; erring low would hide the links, because Material
+// gives .md-sidebar a stacking order the footer does not have.
+const TECHDOCS_FOOTER_HEIGHT = '5rem';
 const APP_SIDEBAR_WIDTH_PINNED = '224px';
 const APP_SIDEBAR_WIDTH_COLLAPSED = '72px';
 
@@ -132,7 +138,7 @@ export default ({ theme, sidebar }: RuleOptions) => `
 }
 .md-footer-nav__link, .md-footer__link {
   width: auto;
-  min-width: var(--techdocs-sidebar-width, 16rem);
+  min-width: ${TECHDOCS_SIDEBAR_WIDTH};
   background-color: var(--md-default-bg-color);
 }
 
@@ -141,41 +147,88 @@ export default ({ theme, sidebar }: RuleOptions) => `
 }
 
 /*
-  Desktop: sidebars stay in flow and stick to the Backstage page scrollport.
-  Only the nav itself scrolls, so short trees show no scrollbar at all.
-  Narrower viewports keep Material's own off-canvas drawer, which is fixed
-  positioned - do not make those sticky.
+  Grows the nav to exactly the space between the top of the sidebar column and
+  the parked footer. See the animation-range note below for why this is exact
+  rather than an approximation - nothing here is animated for its own sake.
+*/
+@keyframes techdocs-sidebar-fill {
+  from {
+    max-height: 0;
+  }
+  to {
+    max-height: calc(100dvh - ${TECHDOCS_FOOTER_HEIGHT});
+  }
+}
+
+/*
+  Desktop: the sidebar column stays in normal flow and the scrollwrap inside it
+  sticks to the Backstage page scrollport. Only the nav itself scrolls, so short
+  trees show no scrollbar at all. Narrower viewports keep Material's own
+  off-canvas drawer, which is fixed positioned - do not make those sticky.
 */
 @media screen and (min-width: 76.25em) {
   /*
-    :not([hidden]) is load bearing twice over: it outranks Material's own
-    display rule on the TOC, and it keeps the mkdocs "hide: navigation" and
-    "hide: toc" front matter working — mkdocs marks those sidebars [hidden]
-    and relies on the UA display:none, which any author display would beat.
+    :not([hidden]) is load bearing: it keeps the mkdocs "hide: navigation" and
+    "hide: toc" front matter working — mkdocs marks those sidebars [hidden] and
+    relies on the UA display:none, which any author display would beat.
 
-    The blog plugin nests a second sidebar inside the content column, which
-    Material lays out full width and static. Its rule ties with ours on
-    specificity and we are later in the cascade, so exclude it by hand.
+    Matching --primary and --secondary by name leaves the blog plugin's
+    .md-sidebar--post alone; Material lays that one out inside the content
+    column and wants it static.
+
+    The column must stay in flow, and must NOT be sticky: it is the subject of
+    the view timeline below, and view progress follows an element's rendered
+    position, so a sticky subject would never leave the viewport and its
+    timeline would stretch across the whole document.
   */
-  .md-sidebar:not([hidden]):not(.md-sidebar--post),
+  .md-sidebar--primary:not([hidden]),
   .md-sidebar--secondary:not([hidden]) {
+    position: static;
+    /*
+      Material aligns the column to flex-start, which makes it only as tall as
+      the nav. The scrollwrap sticks within this column, so that would leave it
+      no travel at all and the nav would simply scroll away with the page.
+    */
+    align-self: stretch;
+    flex-shrink: 0;
+    width: ${TECHDOCS_SIDEBAR_WIDTH};
+    height: auto;
+    max-height: none;
+    padding-bottom: 0;
+    view-timeline-name: --techdocs-sidebar;
+    view-timeline-axis: block;
+  }
+
+  /*
+    The nav has to stop exactly where the footer parks, or a long tree hides the
+    Previous / Next links. That distance is "viewport height - footer - how far
+    the column top still sits below the viewport top", and the last term is the
+    one plain CSS cannot name: sticky can clamp a position but never derive a
+    height from it, and anchor() resolves once and is then only translated.
+
+    A view timeline supplies it. For a subject that is not itself sticky, offset
+    x into the "cover" range means the subject's top sits exactly x above the
+    bottom of the viewport, so interpolating max-height from 0 to
+    (100dvh - footer) across "cover <footer>" to "cover 100dvh" evaluates to
+    100dvh - footer - <column top>, which is the free space, exactly. Starting
+    at "cover <footer>" rather than 0% is what makes it exact: that is the point
+    where the free space crosses zero.
+
+    Once the column scrolls off the top, animation-fill-mode pins the end value,
+    which is the same answer the stuck state needs. Where scroll-driven
+    animations are unsupported the animation has no duration and settles on that
+    same end value, so the static max-height below is what everyone else gets.
+  */
+  .md-sidebar--primary:not([hidden]) > .md-sidebar__scrollwrap,
+  .md-sidebar--secondary:not([hidden]) > .md-sidebar__scrollwrap {
     position: sticky;
     top: 0;
-    align-self: flex-start;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    width: var(--techdocs-sidebar-width, 16rem);
-    height: auto;
-    max-height: 100dvh;
-    padding-bottom: 0;
-  }
-  .md-sidebar .md-sidebar__scrollwrap {
-    width: var(--techdocs-sidebar-width, 16rem);
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: none;
+    width: ${TECHDOCS_SIDEBAR_WIDTH};
+    max-height: calc(100dvh - ${TECHDOCS_FOOTER_HEIGHT});
     overflow-y: auto;
+    animation: techdocs-sidebar-fill linear both;
+    animation-timeline: --techdocs-sidebar;
+    animation-range: cover ${TECHDOCS_FOOTER_HEIGHT} cover 100dvh;
   }
   .md-sidebar .md-nav {
     margin-bottom: 0;
@@ -232,12 +285,12 @@ export default ({ theme, sidebar }: RuleOptions) => `
     height: 100%;
   }
   .md-sidebar--primary {
-    width: var(--techdocs-sidebar-width, 16rem) !important;
+    width: ${TECHDOCS_SIDEBAR_WIDTH} !important;
     z-index: 200;
     left: ${
       sidebar.isPinned
-        ? `calc(-1 * var(--techdocs-sidebar-width, 16rem) + var(--techdocs-sidebar-closed-offset-pinned, ${APP_SIDEBAR_WIDTH_PINNED}))`
-        : `calc(-1 * var(--techdocs-sidebar-width, 16rem) + var(--techdocs-sidebar-closed-offset-collapsed, ${APP_SIDEBAR_WIDTH_COLLAPSED}))`
+        ? `calc(-1 * ${TECHDOCS_SIDEBAR_WIDTH} + var(--techdocs-sidebar-closed-offset-pinned, ${APP_SIDEBAR_WIDTH_PINNED}))`
+        : `calc(-1 * ${TECHDOCS_SIDEBAR_WIDTH} + var(--techdocs-sidebar-closed-offset-collapsed, ${APP_SIDEBAR_WIDTH_COLLAPSED}))`
     } !important;
   }
   .md-sidebar--secondary:not([hidden]) {
@@ -245,7 +298,7 @@ export default ({ theme, sidebar }: RuleOptions) => `
   }
 
   [data-md-toggle=drawer]:checked~.md-container .md-sidebar--primary {
-    transform: translateX(var(--techdocs-sidebar-open-translate, var(--techdocs-sidebar-width, 16rem)));
+    transform: translateX(var(--techdocs-sidebar-open-translate, ${TECHDOCS_SIDEBAR_WIDTH}));
   }
 
   .md-content {
@@ -278,8 +331,8 @@ export default ({ theme, sidebar }: RuleOptions) => `
 
 @media screen and (max-width: 600px) {
   .md-sidebar--primary {
-    left: calc(-1 * var(--techdocs-sidebar-width, 16rem)) !important;
-    width: var(--techdocs-sidebar-width, 16rem);
+    left: calc(-1 * ${TECHDOCS_SIDEBAR_WIDTH}) !important;
+    width: ${TECHDOCS_SIDEBAR_WIDTH};
   }
 }
 

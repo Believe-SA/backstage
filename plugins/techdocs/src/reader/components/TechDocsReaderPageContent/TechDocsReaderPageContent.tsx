@@ -32,9 +32,12 @@ import styles from '../TechDocsReaderPage/TechDocsReaderPage.module.css';
 const useStyles = makeStyles({
   search: {
     width: '100%',
-    // Same breakpoint the shadow-DOM sidebars use, so the two never disagree.
+    // Line the search bar up with the article column. The shadow DOM puts a
+    // 16rem sidebar on either side of it, and this grid item shares the host
+    // item's gutter, so subtracting the two sidebars is enough. The breakpoint
+    // is the one the sidebars themselves use, so the two cannot disagree.
     '@media (min-width: 76.25em)': {
-      width: 'calc(100% - 34.4rem)',
+      width: 'calc(100% - 32rem)',
       margin: '0 auto',
     },
     '@media print': {
