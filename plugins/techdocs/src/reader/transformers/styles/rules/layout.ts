@@ -136,9 +136,17 @@ export default ({ theme, sidebar }: RuleOptions) => `
 .md-footer__title {
   background-color: unset;
 }
+/*
+  These are painted opaque so they stay readable over the document, which means
+  the box must not outgrow the sidebar column it sits in. The link is a flex
+  item with an auto basis and its title is only capped by a percentage
+  max-width, so without a ceiling a long adjacent-page title sizes the box to
+  its text and drags an opaque strip across the article.
+*/
 .md-footer-nav__link, .md-footer__link {
   width: auto;
   min-width: ${TECHDOCS_SIDEBAR_WIDTH};
+  max-width: ${TECHDOCS_SIDEBAR_WIDTH};
   background-color: var(--md-default-bg-color);
 }
 

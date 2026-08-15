@@ -163,6 +163,13 @@ describe('Transformers > Styles', () => {
       /\.md-footer-meta,\s*\.md-footer-nav__link,\s*\.md-footer__link \{[^}]*pointer-events:\s*auto/s,
     );
 
+    // The painted chips have to be pinned to the sidebar column from both
+    // sides. With only a floor, a long adjacent-page title sizes the flex item
+    // to its own text and drags the opaque background across the article.
+    const links = blockAfter(css, /\.md-footer-nav__link, \.md-footer__link/);
+    expect(links).toMatch(/min-width:\s*16rem/);
+    expect(links).toMatch(/max-width:\s*16rem/);
+
     // The links park in the sidebar columns, so the nav must stop above them.
     // The static max-height is what browsers without scroll-driven animations
     // fall back to, and is also the value the timeline settles on once the
