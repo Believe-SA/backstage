@@ -20,6 +20,28 @@ import { createTheme, ThemeProvider } from '@material-ui/core/styles';
 import { ReactNode } from 'react';
 import postcss from 'postcss';
 
+/**
+ * Returns the body of the brace-balanced block introduced by `header`.
+ *
+ * The rules are written as raw CSS inside template literals, which prettier
+ * does not format, so matching a closing brace by indentation would leave these
+ * assertions at the mercy of hand-maintained whitespace. Counting braces means
+ * a reflow cannot silently shrink the region an assertion runs against.
+ */
+const blockAfter = (css: string, header: RegExp) => {
+  const start = css.search(header);
+  if (start === -1) {
+    throw new Error(`no block found for ${header}`);
+  }
+  const open = css.indexOf('{', start);
+  let depth = 0;
+  for (let i = open; i < css.length; i++) {
+    if (css[i] === '{') depth++;
+    if (css[i] === '}' && --depth === 0) return css.slice(open + 1, i);
+  }
+  throw new Error(`unbalanced braces after ${header}`);
+};
+
 describe('Transformers > Styles', () => {
   it('should return a function that injects all styles into a given dom element', () => {
     const { result } = renderHook(() => useStylesTransformer());
@@ -84,25 +106,34 @@ describe('Transformers > Styles', () => {
     expect(css).toMatch(/body\s*\{[^}]*overflow:\s*visible/s);
     expect(css).toMatch(/\.md-main__inner\s*\{[^}]*display:\s*flex/s);
 
-    const desktop = css.match(
-      /@media screen and \(min-width: 76\.25em\)\s*\{[\s\S]*?\n\}/,
-    )![0];
+    const desktop = blockAfter(
+      css,
+      /@media screen and \(min-width: 76\.25em\)/,
+    );
 
+    // Assert against the column's own rule body, not the whole media block, so
+    // moving any of these onto a neighbouring rule fails the test. Dropping
+    // --secondary from the selector, for instance, would leave the table of
+    // contents column unstretched and its scrollwrap with no sticky travel.
+    const column = blockAfter(
+      desktop,
+      /\.md-sidebar--primary:not\(\[hidden\]\),\s*\.md-sidebar--secondary:not\(\[hidden\]\)/,
+    );
     // The column carries the view timeline, so it must stay in flow: a sticky
     // subject never leaves the viewport and its timeline would then span the
     // whole document instead of one viewport height. It also has to stretch,
     // or the scrollwrap that sticks inside it gets no travel at all.
-    expect(desktop).toMatch(
-      /\.md-sidebar--primary:not\(\[hidden\]\),\s*\.md-sidebar--secondary:not\(\[hidden\]\) \{[^}]*position:\s*static/s,
-    );
-    expect(desktop).toMatch(/align-self:\s*stretch/);
-    expect(desktop).toMatch(/view-timeline-name:\s*--techdocs-sidebar/);
+    expect(column).toMatch(/position:\s*static/);
+    expect(column).toMatch(/align-self:\s*stretch/);
+    expect(column).toMatch(/view-timeline-name:\s*--techdocs-sidebar/);
 
     // Sticky moved onto the scrollwrap, and is scoped to the wide breakpoint;
     // narrower viewports keep Material's fixed off-canvas drawer.
-    expect(desktop).toMatch(
-      /\.md-sidebar__scrollwrap \{[^}]*position:\s*sticky/s,
+    const scrollwrap = blockAfter(
+      desktop,
+      /\.md-sidebar--primary:not\(\[hidden\]\) > \.md-sidebar__scrollwrap/,
     );
+    expect(scrollwrap).toMatch(/position:\s*sticky/);
     expect(css).not.toMatch(/^\.md-sidebar\s*\{[^}]*position:\s*sticky/ms);
     expect(css).toMatch(
       /@media screen and \(max-width: 76\.1875em\)\s*\{[\s\S]*?\.md-sidebar--secondary:not\(\[hidden\]\)/,
@@ -135,27 +166,33 @@ describe('Transformers > Styles', () => {
     // The links park in the sidebar columns, so the nav must stop above them.
     // The static max-height is what browsers without scroll-driven animations
     // fall back to, and is also the value the timeline settles on once the
-    // column has scrolled off the top.
-    expect(css).toMatch(
-      /@media screen and \(min-width: 76\.25em\)[\s\S]*?max-height:\s*calc\(100dvh - 5rem\)/,
+    // column has scrolled off the top. Before that, the nav is grown to exactly
+    // the gap above the parked footer, so both ends of the range must agree
+    // with the reserved band: the range has to start where free space hits
+    // zero, or the nav reaches the links on the first screenful.
+    const scrollwrap = blockAfter(
+      blockAfter(css, /@media screen and \(min-width: 76\.25em\)/),
+      /\.md-sidebar--primary:not\(\[hidden\]\) > \.md-sidebar__scrollwrap/,
     );
-
-    // Before that, the nav is grown to exactly the gap above the parked footer.
-    // Both ends of the range must agree with the reserved band, or the nav
-    // reaches the links: the range has to start where free space hits zero.
-    expect(css).toMatch(
-      /@keyframes techdocs-sidebar-fill \{[^@]*to \{\s*max-height:\s*calc\(100dvh - 5rem\)/s,
+    expect(scrollwrap).toMatch(/max-height:\s*calc\(100dvh - 5rem\)/);
+    expect(scrollwrap).toMatch(/animation-range:\s*cover 5rem cover 100dvh/);
+    expect(blockAfter(css, /@keyframes techdocs-sidebar-fill/)).toMatch(
+      /to \{\s*max-height:\s*calc\(100dvh - 5rem\)/s,
     );
-    expect(css).toMatch(/animation-range:\s*cover 5rem cover 100dvh/);
 
     // Parking the footer is only safe where that measurement is available.
     // Without it the nav cannot know where to stop, so the footer has to go
-    // back to the end of the document rather than sit on top of the nav.
-    const fallback = css.match(
-      /@supports not \(animation-timeline: view\(\)\) \{[\s\S]*?\n\}/,
-    )![0];
-    expect(fallback).toMatch(/\.md-footer \{[^}]*position:\s*static/s);
-    expect(fallback).toMatch(/max-height:\s*100dvh/);
+    // back to the end of the document rather than sit on top of the nav. The
+    // keyframes still apply there, so the animation has to be switched off
+    // before the fallback's own max-height can win.
+    const fallback = blockAfter(
+      css,
+      /@supports not \(animation-timeline: view\(\)\)/,
+    );
+    expect(blockAfter(fallback, /\.md-footer/)).toMatch(/position:\s*static/);
+    const fallbackWrap = blockAfter(fallback, /\.md-sidebar__scrollwrap/);
+    expect(fallbackWrap).toMatch(/animation:\s*none/);
+    expect(fallbackWrap).toMatch(/max-height:\s*100dvh/);
   });
 
   it('should use headers relative font-size value as the factor for the md-typeset variable', () => {
