@@ -16,7 +16,6 @@
 
 import { GithubIntegrationConfig } from '@backstage/integration';
 import { ScmAuthApi } from '@backstage/integration-react';
-import { Octokit } from '@octokit/rest';
 import { getBranchName, getCatalogFilename } from '../components/helpers';
 import { ConfigApi } from '@backstage/core-plugin-api';
 import { Base64 } from 'js-base64';
@@ -52,6 +51,9 @@ export async function submitGitHubPrToRepo(
       repoWrite: true,
     },
   });
+
+  // Load Octokit only when submitting a PR — not when the catalog-import API is registered.
+  const { Octokit } = await import('@octokit/rest');
 
   const octo = new Octokit({
     auth: token,

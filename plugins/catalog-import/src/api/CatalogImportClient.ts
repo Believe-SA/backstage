@@ -22,7 +22,6 @@ import {
 } from '@backstage/integration';
 import { ScmAuthApi } from '@backstage/integration-react';
 import { AnalyzeResult, CatalogImportApi } from './CatalogImportApi';
-import YAML from 'yaml';
 import { GitHubOptions, submitGitHubPrToRepo } from './GitHub';
 import { getCatalogFilename } from '../components/helpers';
 import { AnalyzeLocationResponse } from '@backstage/plugin-catalog-common';
@@ -175,7 +174,10 @@ the component will become available.\n\nFor more information, read an \
   }): Promise<{ link: string; location: string }> {
     const { repositoryUrl, fileContent, title, body } = options;
 
-    const parseData = YAML.parseAllDocuments(fileContent);
+    // Load yaml only when validating PR content — not when the API is registered.
+    const { parseAllDocuments } = await import('yaml');
+
+    const parseData = parseAllDocuments(fileContent);
 
     for (const document of parseData) {
       const validationResponse = await this.catalogApi.validateEntity(
