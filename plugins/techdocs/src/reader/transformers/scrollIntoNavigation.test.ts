@@ -37,7 +37,7 @@ describe('scrollIntoNavigation', () => {
 
     jest.advanceTimersByTime(200);
 
-    expect(scrollNavIntoView).toHaveBeenCalledWith();
+    expect(scrollNavIntoView).toHaveBeenCalledWith({ block: 'nearest' });
   });
 
   it('expand active navigation items', async () => {

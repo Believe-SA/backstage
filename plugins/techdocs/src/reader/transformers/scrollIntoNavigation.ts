@@ -30,7 +30,9 @@ export const scrollIntoNavigation = (): Transformer => {
         });
 
         const lastItem = activeNavItems[activeNavItems.length - 1];
-        lastItem.scrollIntoView();
+        // `nearest` keeps this to the nav's own scrollwrap; the default
+        // alignment would scroll the page and take the heading off screen.
+        lastItem.scrollIntoView({ block: 'nearest' });
       }
     }, 200);
     return dom;
