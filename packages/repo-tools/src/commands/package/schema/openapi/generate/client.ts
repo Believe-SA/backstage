@@ -105,9 +105,9 @@ async function generate(
     { signal: abortSignal?.signal },
   );
 
-  const prettier = targetPaths.resolveRoot('node_modules/.bin/prettier');
-  if (await fs.pathExists(prettier)) {
-    await exec(`${prettier} --write ${parentDirectory}`, [], {
+  const oxfmt = targetPaths.resolveRoot('node_modules/.bin/oxfmt');
+  if (await fs.pathExists(oxfmt)) {
+    await exec(oxfmt, ['--no-error-on-unmatched-pattern', parentDirectory], {
       signal: abortSignal?.signal,
     });
   }

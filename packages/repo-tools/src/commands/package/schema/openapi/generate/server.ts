@@ -85,10 +85,9 @@ export const createOpenApiRouter = async (
     tsPath,
     indexFile,
   ]);
-  if (
-    await fs.pathExists(targetPaths.resolveRoot('node_modules/.bin/prettier'))
-  ) {
-    await exec(`yarn prettier`, ['--write', tsPath, indexFile], {
+  const oxfmt = targetPaths.resolveRoot('node_modules/.bin/oxfmt');
+  if (await fs.pathExists(oxfmt)) {
+    await exec(oxfmt, ['--no-error-on-unmatched-pattern', tsPath, indexFile], {
       cwd: targetPaths.rootDir,
     });
   }
@@ -165,11 +164,13 @@ async function generate(
     { signal: abortSignal?.signal },
   );
 
-  const prettier = targetPaths.resolveRoot('node_modules/.bin/prettier');
-  if (prettier) {
-    await exec(`${prettier} --write ${resolvedOutputDirectory}`, [], {
-      signal: abortSignal?.signal,
-    });
+  const oxfmt = targetPaths.resolveRoot('node_modules/.bin/oxfmt');
+  if (await fs.pathExists(oxfmt)) {
+    await exec(
+      oxfmt,
+      ['--no-error-on-unmatched-pattern', resolvedOutputDirectory],
+      { signal: abortSignal?.signal },
+    );
   }
 
   fs.removeSync(resolve(resolvedOutputDirectory, '.openapi-generator-ignore'));
