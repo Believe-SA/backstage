@@ -93,9 +93,17 @@ async function generate(
     export * from './generated';`,
   );
 
-  await exec(`yarn backstage-cli package lint --fix ${parentDirectory}`, [], {
-    signal: abortSignal?.signal,
-  });
+  await exec(
+    targetPaths.resolveRoot('node_modules/.bin/oxlint'),
+    [
+      '-c',
+      targetPaths.resolveRoot('oxlint/generated-fix.jsonc'),
+      '--fix',
+      '--fix-suggestions',
+      parentDirectory,
+    ],
+    { signal: abortSignal?.signal },
+  );
 
   const prettier = targetPaths.resolveRoot('node_modules/.bin/prettier');
   if (await fs.pathExists(prettier)) {

@@ -77,7 +77,14 @@ export const createOpenApiRouter = async (
     export * from './generated';`,
   );
 
-  await exec(`yarn backstage-cli package lint`, ['--fix', tsPath, indexFile]);
+  await exec(targetPaths.resolveRoot('node_modules/.bin/oxlint'), [
+    '-c',
+    targetPaths.resolveRoot('oxlint/generated-fix.jsonc'),
+    '--fix',
+    '--fix-suggestions',
+    tsPath,
+    indexFile,
+  ]);
   if (
     await fs.pathExists(targetPaths.resolveRoot('node_modules/.bin/prettier'))
   ) {
@@ -147,11 +154,15 @@ async function generate(
   }
 
   await exec(
-    `yarn backstage-cli package lint --fix ${resolvedOutputDirectory}`,
-    [],
-    {
-      signal: abortSignal?.signal,
-    },
+    targetPaths.resolveRoot('node_modules/.bin/oxlint'),
+    [
+      '-c',
+      targetPaths.resolveRoot('oxlint/generated-fix.jsonc'),
+      '--fix',
+      '--fix-suggestions',
+      resolvedOutputDirectory,
+    ],
+    { signal: abortSignal?.signal },
   );
 
   const prettier = targetPaths.resolveRoot('node_modules/.bin/prettier');
