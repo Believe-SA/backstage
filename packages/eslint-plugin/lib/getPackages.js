@@ -56,14 +56,35 @@ module.exports = (function () {
     if (!packages) {
       return undefined;
     }
+    const byDir = new Map(packages.packages.map(pkg => [pkg.dir, pkg]));
+    // Lookups are cached per directory, since byPath is called for every
+    // linted file and often for every import within those files
+    const dirCache = new Map();
     result = {
       map: new Map(packages.packages.map(pkg => [pkg.packageJson.name, pkg])),
       list: packages.packages,
       root: packages.root,
       byPath(filePath) {
-        return packages.packages.find(
-          pkg => !path.relative(pkg.dir, filePath).startsWith('..'),
-        );
+        const resolved = path.resolve(filePath);
+        // The path may point directly at a package directory
+        const ownPkg = byDir.get(resolved);
+        if (ownPkg) {
+          return ownPkg;
+        }
+        const start = path.dirname(resolved);
+        if (dirCache.has(start)) {
+          return dirCache.get(start);
+        }
+        // Walk up towards the filesystem root to find the nearest package
+        let pkg;
+        for (let d = start; ; d = path.dirname(d)) {
+          pkg = byDir.get(d);
+          if (pkg || d === path.dirname(d)) {
+            break;
+          }
+        }
+        dirCache.set(start, pkg);
+        return pkg;
       },
       clearCache() {
         result = undefined;
