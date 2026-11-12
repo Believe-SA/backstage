@@ -28,6 +28,7 @@ import {
 import { deduplicateImports } from '../../../../../lib/openapi/dedupe-imports';
 import { targetPaths } from '@backstage/cli-common';
 import { runOutputWithStderr } from '../../../../../lib/runOutputWithStderr';
+import { backstageCliCommand } from '../../../../../lib/backstageCli';
 import {
   getOpenApiGeneratorKey,
   getPathToCurrentOpenApiSpec,
@@ -35,7 +36,10 @@ import {
   toGeneratorAdditionalProperties,
 } from '../../../../../lib/openapi/helpers';
 
-async function generateSpecFile() {
+/**
+ * Writes the router and index files, returning the path of the index file.
+ */
+async function writeSpecFiles() {
   const openapiPath = await getPathToCurrentOpenApiSpec();
   const yaml = loadYaml(await fs.readFile(openapiPath, 'utf8'));
 
@@ -53,7 +57,7 @@ async function generateSpecFile() {
   // The first set of comment slashes allow for the eslint notice plugin to run
   // with onNonMatchingHeader: 'replace', as is the case in the open source
   // Backstage repo. Otherwise the auto-generated comment will be removed by the
-  // lint call below.
+  // lint run that follows once all the files are written.
   await fs.writeFile(
     tsPath,
     `//
@@ -77,25 +81,7 @@ export const createOpenApiRouter = async (
     export * from './generated';`,
   );
 
-  await runOutputWithStderr([
-    'yarn',
-    'backstage-cli',
-    'package',
-    'lint',
-    '--fix',
-    tsPath,
-    indexFile,
-  ]);
-  if (
-    await fs.pathExists(targetPaths.resolveRoot('node_modules/.bin/prettier'))
-  ) {
-    await runOutputWithStderr(
-      ['yarn', 'prettier', '--write', tsPath, indexFile],
-      {
-        cwd: targetPaths.rootDir,
-      },
-    );
-  }
+  return indexFile;
 }
 
 async function generate(
@@ -153,25 +139,6 @@ async function generate(
     }
   }
 
-  await runOutputWithStderr(
-    [
-      'yarn',
-      'backstage-cli',
-      'package',
-      'lint',
-      '--fix',
-      resolvedOutputDirectory,
-    ],
-    { signal: abortSignal?.signal },
-  );
-
-  const prettier = targetPaths.resolveRoot('node_modules/.bin/prettier');
-  if (prettier) {
-    await runOutputWithStderr([prettier, '--write', resolvedOutputDirectory], {
-      signal: abortSignal?.signal,
-    });
-  }
-
   fs.removeSync(resolve(resolvedOutputDirectory, '.openapi-generator-ignore'));
   fs.removeSync(resolve(resolvedOutputDirectory, '.gitattributes'));
 
@@ -184,7 +151,25 @@ async function generate(
     force: true,
   });
 
-  await generateSpecFile();
+  // The router and index files are written before linting and formatting, so
+  // that all the generated files are covered by a single run of each
+  const indexFile = await writeSpecFiles();
+  const generatedPaths = [resolvedOutputDirectory, indexFile];
+
+  await runOutputWithStderr(
+    [...backstageCliCommand(), 'package', 'lint', '--fix', ...generatedPaths],
+    { signal: abortSignal?.signal },
+  );
+
+  const prettier = targetPaths.resolveRoot('node_modules/.bin/prettier');
+  if (await fs.pathExists(prettier)) {
+    // Run in the project root, since Prettier only reads the ignore file of
+    // its working directory
+    await runOutputWithStderr([prettier, '--write', ...generatedPaths], {
+      cwd: targetPaths.rootDir,
+      signal: abortSignal?.signal,
+    });
+  }
 }
 
 export async function command(

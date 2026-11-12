@@ -25,6 +25,7 @@ import {
 import { deduplicateImports } from '../../../../../lib/openapi/dedupe-imports';
 import { targetPaths } from '@backstage/cli-common';
 import { runOutputWithStderr } from '../../../../../lib/runOutputWithStderr';
+import { backstageCliCommand } from '../../../../../lib/backstageCli';
 import {
   getOpenApiGeneratorKey,
   getPathToCurrentOpenApiSpec,
@@ -81,6 +82,15 @@ async function generate(
     },
   );
 
+  // Deduplicate imports in generated files, before they're linted and
+  // formatted
+  const generatedFiles = await fs.readdir(resolvedOutputDirectory);
+  for (const file of generatedFiles) {
+    if (file.endsWith('.ts')) {
+      deduplicateImports(resolve(resolvedOutputDirectory, file));
+    }
+  }
+
   const parentDirectory = resolve(resolvedOutputDirectory, '..');
 
   await fs.writeFile(
@@ -90,7 +100,7 @@ async function generate(
   );
 
   await runOutputWithStderr(
-    ['yarn', 'backstage-cli', 'package', 'lint', '--fix', parentDirectory],
+    [...backstageCliCommand(), 'package', 'lint', '--fix', parentDirectory],
     { signal: abortSignal?.signal },
   );
 
@@ -99,14 +109,6 @@ async function generate(
     await runOutputWithStderr([prettier, '--write', parentDirectory], {
       signal: abortSignal?.signal,
     });
-  }
-
-  // Deduplicate imports in generated files
-  const generatedFiles = await fs.readdir(resolvedOutputDirectory);
-  for (const file of generatedFiles) {
-    if (file.endsWith('.ts')) {
-      deduplicateImports(resolve(resolvedOutputDirectory, file));
-    }
   }
 
   fs.removeSync(resolve(resolvedOutputDirectory, '.openapi-generator-ignore'));
