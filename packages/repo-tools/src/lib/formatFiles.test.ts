@@ -23,10 +23,14 @@ jest.mock('@backstage/cli-common', () => ({
   runOutput: jest.fn(),
 }));
 
+jest.mock('./backstageCli', () => ({
+  backstageCliCommand: () => ['node', '/project/cli/bin/backstage-cli'],
+}));
+
 const mockRunOutput = runOutput as jest.MockedFunction<typeof runOutput>;
 
 function exitError(code: number, stdout: string, stderr = '') {
-  return Object.assign(new ExitCodeError(code, 'yarn backstage-cli'), {
+  return Object.assign(new ExitCodeError(code, 'node backstage-cli'), {
     stdout,
     stderr,
   });
@@ -52,8 +56,8 @@ describe('formatFiles', () => {
     expect(mockRunOutput).toHaveBeenCalledTimes(1);
     expect(mockRunOutput).toHaveBeenCalledWith(
       [
-        'yarn',
-        'backstage-cli',
+        'node',
+        '/project/cli/bin/backstage-cli',
         'package',
         'format',
         '--include-ignored',
@@ -106,12 +110,12 @@ describe('formatFiles', () => {
     expect(error).toBeInstanceOf(ExitCodeError);
     expect(error.code).toBe(2);
     expect(error.message).toBe(
-      "Command 'yarn backstage-cli package format' exited with code 2\n" +
+      "Command 'backstage-cli package format' exited with code 2\n" +
         'a.md 12ms\n' +
         '[error] a.md: SyntaxError: Unexpected token',
     );
 
-    const spawnError = new Error('spawn yarn ENOENT');
+    const spawnError = new Error('spawn node ENOENT');
     mockRunOutput.mockRejectedValue(spawnError);
     await expect(formatFiles(['a.md'])).rejects.toBe(spawnError);
 

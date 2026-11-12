@@ -20,8 +20,9 @@ import {
   relative as relativePath,
   resolve as resolvePath,
 } from 'node:path';
+import { backstageCliCommand } from './backstageCli';
 
-const FORMAT_COMMAND = ['yarn', 'backstage-cli', 'package', 'format'];
+const FORMAT_COMMAND_NAME = 'backstage-cli package format';
 
 /**
  * The most characters of paths passed to a single format command. Windows
@@ -57,9 +58,18 @@ export async function formatFiles(
   paths: string[],
   options: { signal?: AbortSignal; includeIgnored?: boolean } = {},
 ): Promise<void> {
-  const command = options.includeIgnored
-    ? [...FORMAT_COMMAND, '--include-ignored']
-    : FORMAT_COMMAND;
+  if (paths.length === 0) {
+    return;
+  }
+
+  // The CLI is run with Node.js rather than through a package manager, so
+  // that formatting works with any of them
+  const command = [
+    ...backstageCliCommand(),
+    'package',
+    'format',
+    ...(options.includeIgnored ? ['--include-ignored'] : []),
+  ];
 
   const rootDir = targetPaths.rootDir;
 
@@ -97,7 +107,7 @@ export async function formatFiles(
         return;
       }
       // The original message lists every path, so only the command is named
-      const failure = new ExitCodeError(error.code, FORMAT_COMMAND.join(' '));
+      const failure = new ExitCodeError(error.code, FORMAT_COMMAND_NAME);
       const output = [stdout.trim(), stderr.trim()].filter(Boolean).join('\n');
       if (output) {
         failure.message = `${failure.message}\n${output}`;
