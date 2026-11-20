@@ -116,13 +116,13 @@ export interface Config {
        */
       enabled?: boolean;
       /**
-       * Token lifetime before rotation required
+       * How long a refresh token stays valid without being used
        * @default '30 days'
        * @visibility backend
        */
       tokenLifetime?: HumanDuration | string;
       /**
-       * Maximum session lifetime across all rotations
+       * Maximum session lifetime, no matter how often it is refreshed
        * @default '1 year'
        * @visibility backend
        */

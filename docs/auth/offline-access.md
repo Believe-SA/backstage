@@ -32,13 +32,20 @@ The following options are available under `auth.experimentalRefreshToken`:
 
 | Option                                   | Default   | Description                                                                                                                            |
 | ---------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `tokenLifetime`                          | `30 days` | How long a refresh token stays valid without being used. Each use replaces the refresh token with a new one.                           |
+| `tokenLifetime`                          | `30 days` | How long a refresh token stays valid without being used. Each use restarts this period.                                                |
 | `maxRotationLifetime`                    | `1 year`  | The maximum lifetime of a session, no matter how often it is used. After this, the user must sign in again.                            |
 | `maxTokensPerUser`                       | `20`      | The maximum number of sessions per user. When the limit is reached, the least recently used session is removed.                        |
 | `dangerouslyDisableCatalogPresenceCheck` | `false`   | Turns off the check that the user still exists in the catalog when a token is refreshed. See [below](#users-removed-from-the-catalog). |
 
 A client gets at most one session per user. Signing in again with the same
 client replaces its previous session.
+
+Public clients get a new refresh token on every refresh, and the previous one
+stops working. Confidential clients, which are
+[pre-registered clients](../ai/mcp-actions.md#pre-registered-clients) with a
+`clientSecret`, keep the same refresh token:
+they must authenticate on every refresh, so the token is useless without the
+client secret.
 
 ## Ending sessions
 

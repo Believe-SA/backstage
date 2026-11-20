@@ -158,10 +158,11 @@ export class OfflineSessionDatabase {
   }
 
   /**
-   * Get a session and rotate its token atomically
+   * Get a session and replace its token hash atomically
    * This prevents race conditions where multiple refresh requests use the same token
+   * Passing the current hash as the new one only updates last_used_at
    */
-  async getAndRotateToken(
+  async getAndUpdateToken(
     id: string,
     expectedTokenHash: string,
     newTokenHash: string,

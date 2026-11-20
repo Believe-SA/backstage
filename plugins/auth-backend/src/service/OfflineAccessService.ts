@@ -205,13 +205,15 @@ export class OfflineAccessService {
     refreshToken: string;
     tokenIssuer: TokenIssuer;
     clientId?: string;
-    isClientAuthenticationRequired?: (oidcClientId: string) => boolean;
+    authenticatedClientId?: string;
+    requiresClientAuthentication?: (oidcClientId: string) => boolean;
   }): Promise<{ accessToken: string; refreshToken: string }> {
     const {
       refreshToken,
       tokenIssuer,
       clientId,
-      isClientAuthenticationRequired,
+      authenticatedClientId,
+      requiresClientAuthentication,
     } = options;
 
     let sessionId: string;
@@ -238,9 +240,12 @@ export class OfflineAccessService {
       );
     }
 
+    const isConfidentialClient =
+      !!session.oidcClientId &&
+      !!requiresClientAuthentication?.(session.oidcClientId);
     if (
-      session.oidcClientId &&
-      isClientAuthenticationRequired?.(session.oidcClientId)
+      isConfidentialClient &&
+      authenticatedClientId !== session.oidcClientId
     ) {
       throw new OidcError(
         'invalid_client',
@@ -282,11 +287,14 @@ export class OfflineAccessService {
       }
     }
 
-    const { token: newRefreshToken, hash: newHash } =
-      await generateRefreshToken(sessionId);
+    // Client authentication already binds the token to a confidential client
+    // (RFC 9700, section 4.14.2). Keeping it lets concurrent refreshes succeed.
+    const { token: newRefreshToken, hash: newHash } = isConfidentialClient
+      ? { token: refreshToken, hash: session.tokenHash }
+      : await generateRefreshToken(sessionId);
 
-    // Atomically swap the hash so a concurrent request with the same token fails
-    const rotatedSession = await this.#offlineSessionDb.getAndRotateToken(
+    // Atomically swap the hash so a concurrent request with a rotated token fails
+    const rotatedSession = await this.#offlineSessionDb.getAndUpdateToken(
       sessionId,
       session.tokenHash,
       newHash,

@@ -748,10 +748,9 @@ export class OidcService {
         refreshToken: params.refreshToken,
         tokenIssuer: this.tokenIssuer,
         clientId: params.clientId,
-        isClientAuthenticationRequired: clientId => {
-          const required = this.requiresClientAuthentication(clientId);
-          return required && params.authenticatedClientId !== clientId;
-        },
+        authenticatedClientId: params.authenticatedClientId,
+        requiresClientAuthentication: clientId =>
+          this.requiresClientAuthentication(clientId),
       });
 
     return {

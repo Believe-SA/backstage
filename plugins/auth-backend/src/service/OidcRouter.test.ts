@@ -559,6 +559,74 @@ describe('OidcRouter', () => {
       expect(mocks.tokenIssuer.issueToken).not.toHaveBeenCalled();
     });
 
+    it('should not rotate refresh tokens of an authenticated confidential client', async () => {
+      const clientId = 'confidential-client';
+      const clientSecret = 'client-secret';
+      const codeVerifier = 'static-client-code-verifier-for-pkce';
+      const codeChallenge = crypto
+        .createHash('sha256')
+        .update(codeVerifier)
+        .digest('base64url');
+      const redirectUri = 'https://integration.example.com/callback';
+      const { router, mocks } = await createRouterWithOfflineAccess(
+        databaseId,
+        undefined,
+        {
+          staticClients: [
+            { clientId, clientSecret, redirectUris: [redirectUri] },
+          ],
+        },
+      );
+      mocks.tokenIssuer.issueToken.mockResolvedValue({ token: 'access-token' });
+      const session = await mocks.service.createAuthorizationSession({
+        clientId,
+        redirectUri,
+        responseType: 'code',
+        codeChallenge,
+        codeChallengeMethod: 'S256',
+        scope: 'openid offline_access',
+      });
+      const { redirectUrl } = await mocks.service.approveAuthorizationSession({
+        sessionId: session.id,
+        userEntityRef: MOCK_USER_ENTITY_REF,
+      });
+      const app = express().use(router.getRouter());
+      const issued = await request(app)
+        .post('/v1/token')
+        .send({
+          grant_type: 'authorization_code',
+          code: new URL(redirectUrl).searchParams.get('code'),
+          redirect_uri: redirectUri,
+          code_verifier: codeVerifier,
+          client_id: clientId,
+          client_secret: clientSecret,
+        });
+      expect(issued.status).toBe(200);
+      const refreshToken = issued.body.refresh_token;
+      const refresh = () =>
+        request(app).post('/v1/token').send({
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken,
+          client_id: clientId,
+          client_secret: clientSecret,
+        });
+
+      const concurrent = await Promise.all([refresh(), refresh()]);
+      const sequential = await refresh();
+      for (const response of [...concurrent, sequential]) {
+        expect(response.status).toBe(200);
+        expect(response.body.refresh_token).toBe(refreshToken);
+      }
+
+      const unauthenticated = await request(app).post('/v1/token').send({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: clientId,
+      });
+      expect(unauthenticated.status).toBe(401);
+      expect(unauthenticated.body.error).toBe('invalid_client');
+    });
+
     describe('/v1/userinfo', () => {
       it('should return user info for full tokens', async () => {
         const {

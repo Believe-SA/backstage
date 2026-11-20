@@ -272,7 +272,7 @@ describe('OfflineSessionDatabase', () => {
       });
     });
 
-    describe('getAndRotateToken', () => {
+    describe('getAndUpdateToken', () => {
       it('should rotate token when hash matches', async () => {
         await db.createSession({
           id: 'session-1',
@@ -280,7 +280,7 @@ describe('OfflineSessionDatabase', () => {
           tokenHash: 'old-hash',
         });
 
-        const result = await db.getAndRotateToken(
+        const result = await db.getAndUpdateToken(
           'session-1',
           'old-hash',
           'new-hash',
@@ -300,7 +300,7 @@ describe('OfflineSessionDatabase', () => {
           tokenHash: 'current-hash',
         });
 
-        const result = await db.getAndRotateToken(
+        const result = await db.getAndUpdateToken(
           'session-1',
           'wrong-hash',
           'new-hash',
@@ -313,7 +313,7 @@ describe('OfflineSessionDatabase', () => {
       });
 
       it('should return undefined for non-existent session', async () => {
-        const result = await db.getAndRotateToken(
+        const result = await db.getAndUpdateToken(
           'non-existent',
           'hash',
           'new-hash',
@@ -333,7 +333,7 @@ describe('OfflineSessionDatabase', () => {
             .toJSDate(),
         });
 
-        const result = await db.getAndRotateToken(
+        const result = await db.getAndUpdateToken(
           'expired-session',
           'hash-1',
           'new-hash',
@@ -353,7 +353,7 @@ describe('OfflineSessionDatabase', () => {
           last_used_at: DateTime.now().toJSDate(),
         });
 
-        const result = await db.getAndRotateToken(
+        const result = await db.getAndUpdateToken(
           'expired-session',
           'hash-1',
           'new-hash',
