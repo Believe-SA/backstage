@@ -41,11 +41,12 @@ A client gets at most one session per user. Signing in again with the same
 client replaces its previous session.
 
 Public clients get a new refresh token on every refresh, and the previous one
-stops working. Confidential clients, which are
+stops working, so a public client must not refresh concurrently with the same
+token. Confidential clients, which are
 [pre-registered clients](../ai/mcp-actions.md#pre-registered-clients) with a
-`clientSecret`, keep the same refresh token:
-they must authenticate on every refresh, so the token is useless without the
-client secret.
+`clientSecret`, keep the same refresh token. They must authenticate on every
+refresh, so the token cannot be used without the client secret. Rotating the
+secret does not end their sessions; revoke a session to end it.
 
 ## Ending sessions
 

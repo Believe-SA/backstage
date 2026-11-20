@@ -559,8 +559,7 @@ describe('OidcRouter', () => {
       expect(mocks.tokenIssuer.issueToken).not.toHaveBeenCalled();
     });
 
-    it('should not rotate refresh tokens of an authenticated confidential client', async () => {
-      const clientId = 'confidential-client';
+    it('should rotate refresh tokens of public static clients only', async () => {
       const clientSecret = 'client-secret';
       const codeVerifier = 'static-client-code-verifier-for-pkce';
       const codeChallenge = crypto
@@ -573,58 +572,79 @@ describe('OidcRouter', () => {
         undefined,
         {
           staticClients: [
-            { clientId, clientSecret, redirectUris: [redirectUri] },
+            {
+              clientId: 'confidential-client',
+              clientSecret,
+              redirectUris: [redirectUri],
+            },
+            { clientId: 'public-client', redirectUris: [redirectUri] },
           ],
         },
       );
       mocks.tokenIssuer.issueToken.mockResolvedValue({ token: 'access-token' });
-      const session = await mocks.service.createAuthorizationSession({
-        clientId,
-        redirectUri,
-        responseType: 'code',
-        codeChallenge,
-        codeChallengeMethod: 'S256',
-        scope: 'openid offline_access',
-      });
-      const { redirectUrl } = await mocks.service.approveAuthorizationSession({
-        sessionId: session.id,
-        userEntityRef: MOCK_USER_ENTITY_REF,
-      });
       const app = express().use(router.getRouter());
-      const issued = await request(app)
-        .post('/v1/token')
-        .send({
-          grant_type: 'authorization_code',
-          code: new URL(redirectUrl).searchParams.get('code'),
-          redirect_uri: redirectUri,
-          code_verifier: codeVerifier,
-          client_id: clientId,
-          client_secret: clientSecret,
+      type Credentials = { client_id: string; client_secret?: string };
+      const issueRefreshToken = async (credentials: Credentials) => {
+        const session = await mocks.service.createAuthorizationSession({
+          clientId: credentials.client_id,
+          redirectUri,
+          responseType: 'code',
+          codeChallenge,
+          codeChallengeMethod: 'S256',
+          scope: 'openid offline_access',
         });
-      expect(issued.status).toBe(200);
-      const refreshToken = issued.body.refresh_token;
-      const refresh = () =>
-        request(app).post('/v1/token').send({
-          grant_type: 'refresh_token',
-          refresh_token: refreshToken,
-          client_id: clientId,
-          client_secret: clientSecret,
-        });
-
-      const concurrent = await Promise.all([refresh(), refresh()]);
-      const sequential = await refresh();
-      for (const response of [...concurrent, sequential]) {
+        const { redirectUrl } = await mocks.service.approveAuthorizationSession(
+          { sessionId: session.id, userEntityRef: MOCK_USER_ENTITY_REF },
+        );
+        const response = await request(app)
+          .post('/v1/token')
+          .send({
+            grant_type: 'authorization_code',
+            code: new URL(redirectUrl).searchParams.get('code'),
+            redirect_uri: redirectUri,
+            code_verifier: codeVerifier,
+            ...credentials,
+          });
         expect(response.status).toBe(200);
-        expect(response.body.refresh_token).toBe(refreshToken);
-      }
+        return response.body.refresh_token as string;
+      };
+      const refresh = (refreshToken: string, credentials: Credentials) =>
+        request(app)
+          .post('/v1/token')
+          .send({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+            ...credentials,
+          });
 
-      const unauthenticated = await request(app).post('/v1/token').send({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-        client_id: clientId,
+      const confidential = {
+        client_id: 'confidential-client',
+        client_secret: clientSecret,
+      };
+      const confidentialToken = await issueRefreshToken(confidential);
+      const responses = await Promise.all([
+        refresh(confidentialToken, confidential),
+        refresh(confidentialToken, confidential),
+      ]);
+      responses.push(await refresh(confidentialToken, confidential));
+      for (const response of responses) {
+        expect(response.status).toBe(200);
+        expect(response.body.refresh_token).toBe(confidentialToken);
+      }
+      const unauthenticated = await refresh(confidentialToken, {
+        client_id: 'confidential-client',
       });
       expect(unauthenticated.status).toBe(401);
       expect(unauthenticated.body.error).toBe('invalid_client');
+
+      const publicClient = { client_id: 'public-client' };
+      const publicToken = await issueRefreshToken(publicClient);
+      const refreshed = await refresh(publicToken, publicClient);
+      expect(refreshed.status).toBe(200);
+      expect(refreshed.body.refresh_token).not.toBe(publicToken);
+      const reused = await refresh(publicToken, publicClient);
+      expect(reused.status).toBe(400);
+      expect(reused.body.error).toBe('invalid_grant');
     });
 
     describe('/v1/userinfo', () => {
